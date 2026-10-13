@@ -3,59 +3,145 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101018">
-<title>GHOST 游戏库</title>
+<meta name="theme-color" content="#090a10">
+<meta name="description" content="GHOST 游戏库 — 精选恐怖、独立与多人游戏。">
+<title>GHOST — 游戏库</title>
 <style>
-:root{color-scheme:dark;--bg:#0c0c12;--panel:#171722;--line:#2d2d40;--text:#f4f4fb;--muted:#aaaabd;--accent:#9d78ff}
+:root{color-scheme:dark;--bg:#090a10;--panel:#11131d;--panel2:#151824;--line:#282c3b;--text:#f2f3f8;--muted:#9298aa;--accent:#b5a0ff;--red:#e05d71}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#25203a 0,#101018 48%,#09090d 100%);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-main{width:min(100% - 32px,1000px);margin:0 auto;padding:56px 0 40px}
-header{text-align:center;margin-bottom:36px}
-.logo{display:inline-grid;place-items:center;width:68px;height:68px;border:1px solid #51416f;border-radius:22px;background:#211b32;font-size:34px;box-shadow:0 12px 40px #0006}
-h1{font-size:clamp(32px,7vw,52px);margin:16px 0 8px;letter-spacing:2px}
-.subtitle{color:var(--muted);margin:0;font-size:15px}
-.section-title{font-size:18px;margin:0 0 16px}
-.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
-.card{display:flex;flex-direction:column;min-height:250px;padding:22px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#1d1d2b,#13131c);box-shadow:0 12px 32px #0002;transition:transform .18s,border-color .18s}
-.card:hover{transform:translateY(-3px);border-color:#65518b}
-.art{display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:#2a2035;font-size:30px;margin-bottom:18px}
-.card h3{font-size:21px;margin:0 0 8px}
-.card p{color:var(--muted);line-height:1.6;margin:0 0 20px;font-size:14px}
-.actions{margin-top:auto}
-a.button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 16px;border-radius:12px;background:var(--accent);color:#120c20;text-decoration:none;font-weight:750}
-a.button:hover{filter:brightness(1.1)}
-a.button.secondary{background:#252535;color:var(--text);border:1px solid #39394d}
-.tag{display:inline-block;font-size:12px;color:#d7c9ff;background:#322747;border:1px solid #4b3969;border-radius:99px;padding:4px 9px;margin-bottom:10px}
-footer{text-align:center;color:#77778c;font-size:12px;margin-top:34px}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.01em}
+a{color:inherit}
+button,input{font:inherit}
+.layout{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:236px;padding:30px 20px;background:#0d0f17;border-right:1px solid #202330;display:flex;flex-direction:column;z-index:5}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 34px}
+.brand-mark{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,#c6b5ff,#7560d7);color:#12101c;font-weight:900;font-size:19px;box-shadow:0 5px 24px #8068e633}
+.brand-name{font-size:15px;font-weight:850;letter-spacing:.19em}
+.brand-sub{display:block;color:#7e8497;font-size:9px;letter-spacing:.22em;margin-top:3px}
+.nav-label{font-size:10px;font-weight:800;color:#62697d;letter-spacing:.17em;padding:0 12px;margin:0 0 12px}
+.nav{display:grid;gap:5px}
+.nav a{display:flex;align-items:center;gap:12px;text-decoration:none;color:#9298aa;font-size:13px;padding:12px;border:1px solid transparent;border-radius:10px;transition:.2s}
+.nav a:hover,.nav a.active{color:#f1edff;background:#1b1a2a;border-color:#302b47}
+.nav a.active{box-shadow:inset 2px 0 #b5a0ff}
+.nav-icon{width:18px;text-align:center;font-size:15px}
+.sidebar-bottom{margin-top:auto;border:1px solid #282a39;background:linear-gradient(145deg,#171825,#10121a);padding:15px;border-radius:13px}
+.status{display:flex;align-items:center;gap:8px;font-size:11px;color:#b6bbca}
+.dot{width:7px;height:7px;background:#69d6a0;border-radius:50%;box-shadow:0 0 12px #69d6a055}
+.sidebar-bottom p{font-size:11px;color:#7f8598;line-height:1.6;margin:9px 0 0}
+main{margin-left:236px;max-width:1500px;padding:0 48px 32px}
+.topbar{height:78px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #202330;margin-bottom:30px}
+.breadcrumb{font-size:12px;color:#777e91}.breadcrumb strong{color:#d9dbea;font-weight:600}
+.top-actions{display:flex;align-items:center;gap:10px}
+.pill{border:1px solid #292d3d;background:#11131c;border-radius:8px;padding:9px 12px;color:#b9bfd0;font-size:11px}
+.avatar{height:30px;width:30px;border-radius:9px;display:grid;place-items:center;background:#29243b;color:#d6c9ff;font-size:12px;font-weight:800}
+.hero{position:relative;overflow:hidden;min-height:270px;border:1px solid #343047;border-radius:17px;background:radial-gradient(ellipse at 78% 45%,#423054 0,#222039 23%,transparent 52%),linear-gradient(110deg,#191824 0%,#171522 50%,#201725 100%);padding:38px 40px;display:flex;align-items:center;margin-bottom:36px}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#171620 0%,#171620e8 37%,#17162066 70%,#17162033),repeating-linear-gradient(135deg,transparent 0 20px,#ffffff04 21px 22px);pointer-events:none}
+.hero-orb{position:absolute;width:235px;height:235px;right:12%;top:18px;border-radius:50%;background:radial-gradient(circle at 38% 35%,#a69ac4 0,#776287 27%,#43354e 52%,#221e2c 72%);box-shadow:0 0 70px #8d587c22,inset -24px -20px 35px #100f1c;opacity:.82}
+.hero-orb:after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse at 58% 64%,transparent 0 17%,#292130 18% 20%,transparent 21%),radial-gradient(ellipse at 39% 59%,#28202f 0 5%,transparent 6%),radial-gradient(ellipse at 64% 39%,#211d2a 0 7%,transparent 8%);filter:blur(1px)}
+.hero-content{position:relative;z-index:1;max-width:520px}
+.eyebrow{display:flex;align-items:center;gap:9px;color:#c4b4ff;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;margin-bottom:17px}
+.eyebrow:before{content:"";width:20px;height:1px;background:#b5a0ff}
+.hero h1{font-size:clamp(31px,4vw,47px);line-height:1.08;letter-spacing:-.045em;margin:0 0 14px;font-weight:760}
+.hero h1 span{color:#b5a0ff}
+.hero p{color:#a7a7b9;font-size:13px;line-height:1.8;max-width:420px;margin:0 0 23px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:39px;padding:0 16px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:750;transition:transform .2s,border-color .2s,background .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:#b5a0ff;color:#171323;border:1px solid #c4b5ff;box-shadow:0 6px 22px #a18aff20}
+.btn-ghost{background:#ffffff08;border:1px solid #494356;color:#e1ddeb}
+.hero-index{position:absolute;right:25px;bottom:20px;color:#9e92b0;font-size:10px;letter-spacing:.16em;z-index:1}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:17px}
+.section-kicker{color:#7e8497;font-size:10px;font-weight:800;letter-spacing:.18em;margin-bottom:8px}
+.section-head h2{font-size:21px;letter-spacing:-.025em;margin:0;font-weight:720}
+.section-head p{font-size:11px;color:#7e8497;margin:7px 0 0}
+.search{display:flex;align-items:center;gap:9px;min-width:210px;border:1px solid #292d3c;background:#11131b;border-radius:9px;padding:10px 12px;color:#83899b}
+.search input{width:100%;min-width:0;background:transparent;border:0;outline:0;color:#eee;font-size:12px}
+.search input::placeholder{color:#71778a}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:19px}
+.filter{border:1px solid #292d3b;border-radius:7px;background:#11131b;color:#8f96a8;padding:8px 12px;font-size:11px;cursor:pointer}
+.filter:hover,.filter.selected{color:#d8cdff;border-color:#5b4c83;background:#211d31}
+.game-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.game-card{min-width:0;border:1px solid #282c3b;background:linear-gradient(145deg,#151824,#10121a);border-radius:13px;overflow:hidden;transition:transform .22s,border-color .22s,box-shadow .22s}
+.game-card:hover{transform:translateY(-3px);border-color:#49415f;box-shadow:0 14px 35px #0003}
+.cover{height:154px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:17px 18px;background:#191724}
+.cover:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#11121af5 0%,#11121a35 70%,#11121a18)}
+.cover-roulette{background:radial-gradient(ellipse at 70% 25%,#793a48 0,#3c202f 20%,transparent 49%),linear-gradient(125deg,#16131c,#35202c 56%,#17151e)}
+.cover-roulette:before{content:"";position:absolute;width:170px;height:100px;right:10%;top:17px;border-radius:50%;background:radial-gradient(ellipse,#9a5360 0,#582b3a 52%,transparent 72%);filter:blur(7px);transform:rotate(-15deg)}
+.cover-roulette .shape{position:absolute;right:19%;top:20px;width:85px;height:85px;border:1px solid #b97582;border-radius:50%;box-shadow:0 0 0 10px #c47b8610,0 0 0 22px #c47b8608}
+.cover-roulette .shape:after{content:"";position:absolute;width:7px;height:7px;left:38px;top:38px;background:#e3c0b7;border-radius:50%;box-shadow:0 0 22px #ff8c9e}
+.cover-ghost{background:radial-gradient(ellipse at 66% 24%,#4e5878 0,#232b42 25%,transparent 55%),linear-gradient(120deg,#111923,#20293a 55%,#121721)}
+.cover-ghost:before{content:"";position:absolute;right:19%;top:16px;width:67px;height:95px;border-radius:50% 50% 40% 40%;background:linear-gradient(130deg,#c8d1df,#67758c 70%,#2b3448);opacity:.6;filter:blur(1px);box-shadow:0 0 38px #93a6d22a}
+.cover-ghost .shape{position:absolute;right:24%;top:42px;width:6px;height:6px;border-radius:50%;background:#141b2a;z-index:1;box-shadow:19px 0 #141b2a}
+.cover-ghost .shape:after{content:"";position:absolute;top:16px;left:6px;width:14px;height:7px;border-bottom:2px solid #273047;border-radius:50%}
+.cover-label{position:relative;z-index:1;font-size:9px;font-weight:800;letter-spacing:.2em;color:#e1d8e6}
+.cover-number{position:absolute;right:16px;top:14px;z-index:1;font-size:10px;color:#d0c1d0;letter-spacing:.13em}
+.card-body{padding:18px}
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-top h3{font-size:17px;margin:0;font-weight:720;letter-spacing:-.02em}
+.status-tag{font-size:9px;color:#8fe0b4;border:1px solid #2c5545;background:#13251f;padding:5px 7px;border-radius:5px;white-space:nowrap}
+.card-desc{font-size:12px;color:#9298aa;line-height:1.7;min-height:40px;margin:10px 0 15px}
+.card-meta{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.meta{font-size:10px;color:#858b9d;background:#1a1d29;border:1px solid #282c3a;border-radius:5px;padding:5px 7px}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:13px;border-top:1px solid #252836}
+.card-foot span{font-size:10px;color:#737a8e}
+.play-link{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:#d4c8ff;font-size:11px;font-weight:750}
+.play-link:hover{color:#fff}
+.empty{display:none;padding:28px;color:#9298aa;text-align:center;border:1px dashed #303446;border-radius:12px;font-size:12px}
+footer{display:flex;justify-content:space-between;gap:16px;border-top:1px solid #202330;margin-top:44px;padding:20px 0 5px;color:#656c7e;font-size:10px}
+footer strong{color:#9298aa;font-weight:700;letter-spacing:.14em}
+@media(min-width:1400px){main{padding-left:64px;padding-right:64px}.cover{height:180px}}
+@media(max-width:900px){.sidebar{width:72px;padding:22px 10px}.brand{justify-content:center;padding:4px 0 30px}.brand-name,.nav-label,.nav a .nav-text,.sidebar-bottom{display:none}.nav a{justify-content:center;padding:13px 8px}.nav-icon{font-size:17px}.nav a.active{box-shadow:inset 0 -2px #b5a0ff}main{margin-left:72px;padding:0 24px 28px}.hero{padding:30px}.hero-orb{right:4%;opacity:.5}}
+@media(max-width:620px){.sidebar{position:sticky;top:0;width:100%;height:58px;inset:auto;padding:8px 14px;flex-direction:row;align-items:center;border-right:0;border-bottom:1px solid #202330}.brand{padding:0;margin-right:auto}.brand-name{display:block}.brand-sub{display:none}.brand-mark{width:31px;height:31px}.nav{display:flex;gap:3px}.nav-label,.nav a .nav-text,.sidebar-bottom{display:none}.nav a{padding:8px;border:0}.nav-icon{font-size:15px}main{margin:0;padding:0 15px 22px}.topbar{height:57px;margin-bottom:17px}.top-actions .pill{display:none}.hero{min-height:300px;padding:26px 22px;align-items:flex-start}.hero-orb{width:155px;height:155px;right:-10px;top:22px;opacity:.32}.hero-content{max-width:100%}.hero h1{font-size:34px;max-width:320px}.hero p{max-width:340px}.hero-index{right:15px;bottom:12px}.section-head{align-items:flex-start;flex-direction:column}.search{width:100%;min-width:0}.game-grid{grid-template-columns:1fr}.cover{height:165px}.card-desc{min-height:0}footer{flex-direction:column;gap:8px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </head>
 <body>
-<main>
-<header>
-<div class="logo" aria-hidden="true">🎮</div>
-<h1>GHOST 游戏库</h1>
-<p class="subtitle">欢迎来到游戏大厅 · 选择一款游戏，开始游玩</p>
-</header>
-<section aria-labelledby="games-title">
-<h2 class="section-title" id="games-title">选择游戏</h2>
-<div class="games">
-<article class="card">
-<div class="art" aria-hidden="true">🔫</div>
-<span class="tag">恐怖 · 策略 · 联机</span>
-<h3>恶魔轮盘</h3>
-<p>进入恶魔轮盘游戏。房间联机功能是否可用取决于游戏本身和双方网络。</p>
-<div class="actions"><a class="button" href="./roulette/%E6%81%B6%E9%AD%94%E8%BD%AE%E7%9B%98/">▶ 开始游戏</a></div>
-</article>
-<article class="card">
-<div class="art" aria-hidden="true">👻</div>
-<span class="tag">恐怖 · 体感</span>
-<h3>捉鬼</h3>
-<p>用手机相机和转向操作扫描房间，寻找藏在黑暗中的鬼。</p>
-<div class="actions"><a class="button secondary" href="./games/%E6%8D%89%E9%AC%BC/">▶ 开始游戏</a></div>
-</article>
-</div>
-</section>
-<footer>GHOST GAME LIBRARY · 更多游戏将陆续加入</footer>
+<div class="layout">
+<aside class="sidebar" aria-label="主导航">
+  <a class="brand" href="#home" style="text-decoration:none">
+    <span class="brand-mark">G</span><span class="brand-name">GHOST<span class="brand-sub">GAME LIBRARY</span></span>
+  </a>
+  <div class="nav-label">工作台 / WORKSPACE</div>
+  <nav class="nav">
+    <a class="active" href="#home"><span class="nav-icon">⌂</span><span class="nav-text">游戏大厅</span></a>
+    <a href="#games"><span class="nav-icon">▦</span><span class="nav-text">全部游戏</span></a>
+    <a href="#about"><span class="nav-icon">ⓘ</span><span class="nav-text">关于游戏库</span></a>
+  </nav>
+  <div class="sidebar-bottom"><div class="status"><span class="dot"></span> 游戏库在线</div><p>独立游戏 · 恐怖体验<br>持续整理，随时开玩。</p></div>
+</aside>
+<main id="home">
+  <div class="topbar"><div class="breadcrumb">GHOST&nbsp; / &nbsp;<strong>游戏大厅</strong></div><div class="top-actions"><span class="pill">LIBRARY&nbsp; · &nbsp;V1.0</span><span class="avatar">G</span></div></div>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-orb" aria-hidden="true"></div>
+    <div class="hero-content">
+      <div class="eyebrow">CURATED GAME LIBRARY</div>
+      <h1 id="hero-title">进入游戏。<br><span>留在黑暗之外。</span></h1>
+      <p>欢迎来到 GHOST 游戏库。探索精选游戏，找到今晚的下一场冒险。简洁、直接，点击即玩。</p>
+      <div class="hero-actions"><a class="btn btn-primary" href="#games">探索游戏 <span>↗</span></a><a class="btn btn-ghost" href="#about">了解游戏库</a></div>
+    </div>
+    <div class="hero-index">01&nbsp; / &nbsp;GHOST LIBRARY</div>
+  </section>
+  <section id="games" aria-labelledby="games-title">
+    <div class="section-head"><div><div class="section-kicker">YOUR NEXT ADVENTURE</div><h2 id="games-title">游戏精选</h2><p>从这里开始，选择你的下一局。</p></div><label class="search"><span>⌕</span><input id="game-search" type="search" placeholder="搜索游戏名称…" aria-label="搜索游戏"></label></div>
+    <div class="filters" aria-label="游戏分类"><button class="filter selected" data-filter="all">全部游戏 <span>02</span></button><button class="filter" data-filter="horror">恐怖氛围</button><button class="filter" data-filter="strategy">策略对抗</button></div>
+    <div class="game-grid" id="game-grid">
+      <article class="game-card" data-name="恶魔轮盘 buckshot roulette" data-tags="horror strategy">
+        <div class="cover cover-roulette" aria-hidden="true"><span class="shape"></span><span class="cover-number">NO. 001</span><span class="cover-label">RISK YOUR LUCK</span></div>
+        <div class="card-body"><div class="card-top"><h3>恶魔轮盘</h3><span class="status-tag">可游玩</span></div><p class="card-desc">把筹码压上赌桌。在危险与概率之间做出选择，每一轮都可能改变结局。</p><div class="card-meta"><span class="meta">恐怖氛围</span><span class="meta">策略对抗</span><span class="meta">单人 / 多人功能视游戏支持</span></div><div class="card-foot"><span>BUCKSHOT ROULETTE</span><a class="play-link" href="./roulette/%E6%81%B6%E9%AD%94%E8%BD%AE%E7%9B%98/">进入游戏 <span>↗</span></a></div></div>
+      </article>
+      <article class="game-card" data-name="捉鬼 ghost hunt" data-tags="horror">
+        <div class="cover cover-ghost" aria-hidden="true"><span class="shape"></span><span class="cover-number">NO. 002</span><span class="cover-label">SOMETHING IS HERE</span></div>
+        <div class="card-body"><div class="card-top"><h3>捉鬼</h3><span class="status-tag">可游玩</span></div><p class="card-desc">举起设备，观察四周。寻找潜伏在空间里的异常，让每一次探索都更有沉浸感。</p><div class="card-meta"><span class="meta">恐怖氛围</span><span class="meta">探索体验</span><span class="meta">移动端体验</span></div><div class="card-foot"><span>GHOST HUNT</span><a class="play-link" href="./games/%E6%8D%89%E9%AC%BC/">进入游戏 <span>↗</span></a></div></div>
+      </article>
+    </div>
+    <div class="empty" id="empty-state">没有找到匹配的游戏，试试其他关键词。</div>
+  </section>
+  <footer id="about"><strong>GHOST&nbsp; / &nbsp;GAME LIBRARY</strong><span>一个轻量、持续更新的个人游戏库。</span><span>© GHOST</span></footer>
 </main>
+</div>
+<script>
+(()=>{const search=document.querySelector('#game-search');const cards=[...document.querySelectorAll('.game-card')];const filters=[...document.querySelectorAll('.filter')];const empty=document.querySelector('#empty-state');let category='all';function apply(){const q=search.value.trim().toLowerCase();let shown=0;cards.forEach(card=>{const matchesText=card.dataset.name.toLowerCase().includes(q);const matchesCategory=category==='all'||card.dataset.tags.split(' ').includes(category);card.hidden=!(matchesText&&matchesCategory);if(!card.hidden)shown++});empty.style.display=shown?'none':'block'}filters.forEach(btn=>btn.addEventListener('click',()=>{category=btn.dataset.filter;filters.forEach(item=>item.classList.toggle('selected',item===btn));apply()}));search.addEventListener('input',apply)})();
+</script>
 </body>
 </html>

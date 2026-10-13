@@ -1,0 +1,10 @@
+    taserEffect(victimIsMe = true) {
+        if (typeof FX !== 'undefined') FX.taser(this.scene, victimIsMe);
+    }
+
+    // 起搏器救场：victimIsMe=true 为第一视角濒死体验，否则为旁观视角；总时长固定 8s，保证双方节奏一致
+    pacemakerRevive(victimIsMe, callback) {
+        if (typeof FX === 'undefined') { setTimeout(() => { if (callback) callback(); }, 3000); return; }
+        FX.pacemaker(this.scene, victimIsMe, (t) => this.showMessage(t, 2500, true), callback);
+    }
+

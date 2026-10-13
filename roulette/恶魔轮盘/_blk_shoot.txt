@@ -1,0 +1,30 @@
+    shootEffect(opts = {}) {
+        if (!this.gunGroup) return;
+        const victimIsMe = !!opts.victimIsMe, shooterIsMe = opts.shooterIsMe !== false;
+        if (typeof FX !== 'undefined') FX.gunshot(true);
+        audioMgr.sounds.shoot.volume = 1.0;
+        audioMgr.play('shoot');
+        // 枪口火光：常驻灯（强度归零），避免每次开枪增删灯光导致着色器重编译卡顿
+        if (!this._muzzleLight) {
+            this._muzzleLight = new THREE.PointLight(0xffc070, 0, 30);
+            this._muzzleLight.position.set(0, 0.4, -3.4);
+            this.gunGroup.add(this._muzzleLight);
+        }
+        const light = this._muzzleLight;
+        const core = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffe2b0, transparent: true, opacity: 0.95 }));
+        core.position.set(0, 0.4, -3.5);
+        this.gunGroup.add(core);
+        const t0 = performance.now();
+        const decay = () => {
+            const p = (performance.now() - t0) / 170;
+            if (p >= 1) { light.intensity = 0; this.gunGroup.remove(core); core.geometry.dispose(); core.material.dispose(); return; }
+            light.intensity = 24 * (1 - p); core.material.opacity = 0.95 * (1 - p); core.scale.setScalar(1 + p * 1.8);
+            requestAnimationFrame(decay);
+        };
+        requestAnimationFrame(decay);
+        // 后坐力
+        this.gunGroup.translateZ(1.3); this.gunGroup.rotation.x -= 0.2;
+        setTimeout(() => { this.gunGroup.translateZ(-1.3); this.gunGroup.rotation.x += 0.2; }, 130);
+        // 摄像机：被击中的一方由 FX.hitImpact 负责更猛的抖动
+        if (!victimIsMe) { this.shakeCamera(shooterIsMe ? 0.6 : 0.4, 700, 1.2); this.kickFov(shooterIsMe ? 5 : 3, 300); }
+    }

@@ -1,0 +1,31 @@
+    handleActionClick(type, detail) {
+        if (this.battle.turn === 'animating') return;
+        if (this.isRemote && (this._evBusy || this._pendingReq)) return;   // 上一个动作还没结算完
+        if (type === 'useItem') {
+            const item = this.battle.playerItems[detail];
+            if (item && item.id === 'morphine') {
+                const targetList = this.battle.enemyItems;
+                if (targetList.length === 0) { this.showMessage(`${this.opponentName}没有道具可窃取`, 2000); return; }
+                this.showStealMenu(targetList, (stealIndex) => this._dispatchAction('useItem', { index: detail, stealIndex: stealIndex }));
+                return;
+            }
+        }
+        this._dispatchAction(type, detail);
+    }
+
+    // 单机：直接执行。联机房主：先广播再执行。联机客户端：只发请求，等房主排序后广播回来重放。
+    _dispatchAction(type, detail) {
+        if (!this.isRemote) { this.executeAction(type, detail, this.role); return; }
+        if (this.role === 'host') {
+            this._markBusy();
+            this.sendNetMessage({ type: 'PLAYER_ACTION', actionType: type, detail: detail, actor: 'host', relay: true });
+            this.executeAction(type, detail, 'host');
+        } else {
+            this._pendingReq = true; this._pendingSince = Date.now();
+            clearInterval(this.timerInterval);
+            const ga = document.getElementById('gun-actions'); if (ga) ga.style.display = 'none';
+            this.scene.setItemInteractionEnabled(false);
+            this.sendNetMessage({ type: 'PLAYER_ACTION', actionType: type, detail: detail, actor: 'client' });
+        }
+    }
+

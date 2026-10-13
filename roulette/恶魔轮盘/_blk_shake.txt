@@ -1,0 +1,35 @@
+    // 摄像机抖动：多个冲击可叠加，幅度二次衰减；渲染时临时偏移，渲染后复原，不污染基准位姿
+    shakeCamera(strength = 1, duration = 900, freq = 1) {
+        if (!this._shakes) this._shakes = [];
+        this._shakes.push({ t0: performance.now(), dur: duration, amp: strength, freq: freq, seed: Math.random() * 100 });
+    }
+    kickFov(delta = 8, duration = 500) { this._fovKick = { t0: performance.now(), dur: duration, delta: delta }; }
+    _renderWithShake() {
+        const cam = this.camera, now = performance.now();
+        let ox = 0, oy = 0, oz = 0, roll = 0;
+        if (this._shakes && this._shakes.length) {
+            this._shakes = this._shakes.filter(s => now - s.t0 < s.dur);
+            for (const s of this._shakes) {
+                const p = (now - s.t0) / s.dur, e = Math.pow(1 - p, 2) * s.amp, tt = (now - s.t0) * 0.001 * s.freq;
+                ox += e * 0.55 * (Math.sin(tt * 53 + s.seed) + 0.5 * Math.sin(tt * 97 + s.seed * 2));
+                oy += e * 0.45 * (Math.sin(tt * 61 + s.seed * 3) + 0.5 * Math.sin(tt * 89 + s.seed));
+                oz += e * 0.35 * Math.sin(tt * 43 + s.seed * 5);
+                roll += e * 0.05 * Math.sin(tt * 47 + s.seed * 7);
+            }
+        }
+        if (this._fovKick) {
+            const k = this._fovKick, p = (now - k.t0) / k.dur;
+            if (p >= 1) { this._fovKick = null; cam.fov = 60; }
+            else cam.fov = 60 + k.delta * Math.pow(1 - p, 2);
+            cam.updateProjectionMatrix();
+        }
+        if (ox || oy || oz || roll) {
+            const q = cam.quaternion.clone();
+            cam.position.x += ox; cam.position.y += oy; cam.position.z += oz; cam.rotateZ(roll);
+            this.renderer.render(this.scene, cam);
+            cam.position.x -= ox; cam.position.y -= oy; cam.position.z -= oz; cam.quaternion.copy(q);
+        } else {
+            this.renderer.render(this.scene, cam);
+        }
+    }
+

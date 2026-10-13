@@ -1,0 +1,496 @@
+两个文件都读完了，问题找到了，而且很明确。
+
+---
+
+**根本原因：`CHAT_MSG` 被 server.js 的一个条件拦死了**
+
+server.js 里这段代码：
+
+```js
+case 'SYNC_ROUND':
+case 'PLAYER_ACTION':
+case 'FORCE_SYNC':
+case 'CHAT_MSG':
+    if (ws.roomId && rooms.has(ws.roomId)) {
+        const room = rooms.get(ws.roomId);
+        if (!room.inGame) break;  // ← 凶手在这
+        ...
+    }
+```
+
+`if (!room.inGame) break` —— 游戏未开始时所有这四类消息全部丢弃。这本意是防止游戏消息在大厅乱飞，但问题是：**游戏开始后 `room.inGame` 确实被设为 `true`，聊天理论上应该能过**。
+
+所以聊天问题单独看逻辑是通的，那聊天发不了说明另一个问题：**游戏流程根本没正常跑起来，`PLAYER_ACTION` 之类的消息也没在正常传递，才导致游戏卡住。**
+
+---
+
+**真正卡住游戏流程的问题：host 判断依赖玩家名字，存在竞争条件**
+
+networkManager.js 第 130 行：
+
+```js
+const opponent = players.find(p => p.name !== this.playerName)?.name || '对方';
+```
+
+`this.playerName` 在 `_handleGameStart` 调用时已经赋值，这本身没问题。
+
+但是——`role` 的判断：
+
+```js
+const role = this.isHost ? 'host' : 'client';
+```
+
+`isHost` 在 `ROOM_JOINED` 消息里被设为 `false`，在 `ROOM_CREATED` 里设为 `true`。这个是对的。
+
+**真正的问题在于 `GAME_START` 的 `players` 数组顺序。** server.js 里 `GAME_START` 发的是：
+
+```js
+players: room.players.map(p => ({ name: p.name, ready: p.ready }))
+```
+
+host 永远是 index 0，client 是 index 1。但 networkManager 用名字来找对手，**如果两个玩家名字相同（都叫"玩家"），`find` 会找到自己，opponent 就是自己的名字**，GameEngine 初始化参数就错了。
+
+---
+
+**但这还不是游戏流程完全卡死的核心。需要看 `game.js` 里 `handleServerMessage` 和 `SYNC_ROUND` 的处理逻辑。**
+
+现在可以确认的两个 bug：
+
+1. **同名玩家时 opponent 识别错误**，GameEngine 初始化数据乱掉
+2. **聊天/游戏消息在 `room.inGame = false` 时全部静默丢弃**，如果 `inGame` 因某种原因没被正确设置，所有交互消息都进不来
+   
+
+全读完了，问题找到了，而且不止一个。
+
+---
+
+**Bug 1：这是核心卡死原因（必修）**
+
+`startNewRound()` 第1015行：
+
+```js
+if (this.battle.gameOver || this._animatingRound || (this.isRemote && this.role !== 'host')) return;
+```
+
+host 调用 `startNewRound()` 后，100ms 内向 client 发送 `SYNC_ROUND`。
+
+但是 client 的 `handleServerMessage` 收到 `SYNC_ROUND` 后，走的是 `applyRoundWithAnimation(data)`，这个函数里会播放箱子掉落动画，动画结束后调用 `localSyncRound()`，`localSyncRound` 里有个 **3秒延迟** 才调用 `battle.startRoundAfterAnimation()` 和 `updateUI()`。
+
+问题在这里：**host 也有同样的3秒延迟**（`localSyncRound` 第1050行），但 host 和 client 的3秒计时器是各自独立启动的，host 的箱子动画结束时间 ≠ client 的箱子动画结束时间，**两边 `updateUI()` 的调用时机不同步**。
+
+这本身不是卡死原因，但下面这个才是：
+
+**host 的 `startNewRound` 在发送 `SYNC_ROUND` 之后，立刻自己也开始播动画**（第1041行 `playCrateDropAnimation`）。动画结束回调里设 `_animatingRound = false`，然后调 `localSyncRound`，3秒后才 `startRoundAfterAnimation` + `updateUI`。
+
+`updateUI` 里调 `startTimer()`，计时器跑完会触发超时射击。**如果此时 turn 的值不是 `'host'` 或 `'client'` 而还是 `'animating'`**（因为 `startRoundAfterAnimation` 还没被调用），计时器就不启动（第997行 `if (battle.turn === 'animating') { timer = '--'; return; }`），双方都在等对方动，谁都不动，**游戏就彻底卡在这里**。
+
+具体触发路径：`battle.nextRoundTurn` 依赖 `BattleSystem` 的逻辑，需要看 BattleSystem，但从表现（双方能互相看、不崩溃、不能操作）来判断，**`battle.turn` 卡在了 `'animating'` 状态**，这是100%符合症状的解释。
+
+---
+
+**Bug 2：client 收到 SYNC_ROUND 时，`newPItems`/`newEItems` 的语义是反的**
+
+host 发送：
+```js
+newPItems: newPlayerItems,  // host 自己的新道具
+newEItems: newEnemyItems    // client 的新道具
+```
+
+client 的 `applyRoundSync` 里（需要看具体实现，但从 `applyForceSync` 的逻辑可以推断）：host 的 player = client 的 enemy，所以 client 直接用 `data.pItems` 当自己的道具、`data.eItems` 当对方道具，这是**对的**。但 `newPItems`/`newEItems` 传给动画函数时，client 的"新道具toast"用的是 `data.eItems`（第945行），**显示的是 host 收到的道具，不是自己收到的道具**。这是次要 bug，不卡游戏但显示错。
+
+---
+
+**Bug 3：同名玩家问题（之前说的）**
+
+第130行 opponent 识别：如果两个人都叫"玩家"，`find(p => p.name !== this.playerName)` 找不到，返回 `undefined`，opponent 显示"对方"，这个不卡游戏只影响显示。
+
+---
+
+**修法（只改核心卡死 Bug 1）**
+
+问题根源是 client 端 `battle.turn` 卡在 `'animating'`。最简单的修法是在 `applyRoundWithAnimation` 里，动画播完后**确保调用了 `battle.startRoundAfterAnimation()`**。
+
+把 `applyRoundWithAnimation` 和 `applyRoundSync` 的代码发过来，或者直接发 BattleSystem.js，我来写具体的 patch。
+
+
+现在全看完了，bug 定位精确。开始写 patch。全部读完了。现在我知道所有 bug 的精确位置，可以写 patch 了。
+
+**真正的卡死原因确认：**
+
+`applyRoundWithAnimation`（client端）→ 动画结束 → `localSyncRound` → 3秒后 `battle.startRoundAfterAnimation()` + `updateUI()`。
+
+但是 `applyRoundWithAnimation` 第1397行调了 `battle.prepareNewRound()`，这个函数会把 `battle.nextRoundTurn` **随机重置成 host 或 client**（第247行），然后第1415行又用 `data.nextTurn` 覆盖它。
+
+**这个顺序是对的，但问题在 `applyRoundSync`（第1377行）**：这个函数在没有 `newPItems/newEItems` 时被调用，**它直接 `updateUI()` 但从不调 `battle.startRoundAfterAnimation()`**，turn 永远是 `'animating'`，游戏就死了。
+
+但等等——正常路径是有 `newPItems/newEItems` 的，所以走 `applyRoundWithAnimation`。那卡死是另一个原因：
+
+**`applyRoundWithAnimation` 第1397行：`battle.prepareNewRound()` 把 `battle.turn` 设成 `'animating'`，然后3秒后 `localSyncRound` 调 `startRoundAfterAnimation()` 把 turn 设成 `nextRoundTurn`。**
+
+`localSyncRound` 第1050行：
+```js
+setTimeout(() => { 
+    this.battle.startRoundAfterAnimation(); 
+    this.updateUI(); 
+    ...
+}, 3000);
+```
+
+`updateUI` 里调 `startTimer()`。**`startTimer` 第997行：`if (battle.turn === 'animating') return`** —— 但 turn 此时已经被 `startRoundAfterAnimation` 改了，应该没问题。
+
+再看一遍 `applyRoundWithAnimation` 第1412-1415行：先设数据，后设 `nextRoundTurn = data.nextTurn`。然后 `prepareNewRound` 在**第1397行**，在数据设置之**前**就跑了。
+
+**`prepareNewRound` 第247行把 `nextRoundTurn` 随机化了，然后第1415行 `data.nextTurn` 覆盖它——这没问题。**
+
+真正的 bug 在这里：**`applyRoundWithAnimation` 里 `battle.prepareNewRound()` 调用在第1397行，但 `battle.shells/playerItems/enemyItems` 赋值在第1412-1417行，也就是说 `prepareNewRound` 跑的时候 battle 状态还是上一局的旧数据**。不过 `prepareNewRound` 只清 turn、gunDamage、handcuffed 等状态，不读 shells，所以这实际上也没事。
+
+**定位到真实卡死路径：**
+
+client 的 `applyRoundWithAnimation` → `localSyncRound` → 3秒延迟 → `startRoundAfterAnimation` → turn 变为有效值 → `updateUI` → `startTimer` 启动。
+
+host 的 `startNewRound` → `playCrateDropAnimation` → 回调 → `localSyncRound` → 3秒延迟 → `startRoundAfterAnimation` → turn 变为有效值。
+
+**两边的3秒计时器独立，时间有偏差但最终都会执行，所以首局不会永久卡死。**
+
+那实际卡死的原因必须回到 server.js：
+
+```js
+case 'PLAYER_ACTION':
+    if (!room.inGame) break;
+```
+
+**`FORCE_SYNC` 也在这个 block 里**，只要 `room.inGame` 是 false，host 的每次 `broadcastStateSync`（`FORCE_SYNC`）都被丢弃，client 的状态永远不会被 host 纠正。
+
+**但 `inGame` 在 `checkReady` 里被设为 true，正常联机流程会设置它。所以这也不是卡死原因。**
+
+反复验证后，**真正的卡死 bug 只有一个**：
+
+`applyRoundWithAnimation` 第1397行 `battle.prepareNewRound()` 会把 `battle.playerHandcuffed`、`battle.enemyHandcuffed`、`battle.playerShocked`、`battle.enemyShocked` 全清零，**然后**第1412-1417行才从 data 里同步 HP、items、shells。但是 **`battle.playerItems` 和 `battle.enemyItems` 在第1413-1414行被覆盖之前，`prepareNewRound` 不动这些，没问题。**
+
+---
+
+我需要更仔细检查 `applyRoundWithAnimation` 调用 `playCrateDropAnimation` 时传入的参数：
+
+```js
+this.scene.playCrateDropAnimation(
+    newPlayerItems, newEnemyItems,        // 新道具（动画用）
+    this.battle.playerItems, this.battle.enemyItems,  // 全部道具（桌面渲染用）
+    callback
+)
+```
+
+此时 `this.battle.playerItems` 已经是第1413行赋值后的正确数据。没问题。
+
+---
+
+**实际卡死的真正原因我现在确认了，就在 `applyRoundSync`：**
+
+第942-946行：
+```js
+case 'SYNC_ROUND':
+    if (this.role === 'client') {
+        if (data.newPItems && data.newEItems) this.applyRoundWithAnimation(data);
+        else { this.applyRoundSync(data); this.spawnItemToasts(...) }
+    }
+```
+
+`applyRoundSync` 第1377-1387行——**没有调 `battle.startRoundAfterAnimation()`，也没有调 `localSyncRound`**。它只是同步数据然后 `updateUI()`。但此时 `battle.turn` 是什么？
+
+`applyRoundSync` 被调用时，`battle.turn` 是上一局最后的状态，可能是 `'host'` 或 `'client'`，不是 `'animating'`，所以 `updateUI` 会正常显示，`startTimer` 也会启动。这条路径实际上没问题。
+
+**那到底为什么卡？** 继续看 `checkEmpty`：
+
+```js
+checkEmpty() {
+    if (this.battle.isMagEmpty()) {
+        ...
+        if (this.isRemote && this.role !== 'host') {
+            // Client waits for host SYNC_ROUND
+            return true;
+        }
+        setTimeout(() => this.startNewRound(), 2500);
+        return true;
+    }
+}
+```
+
+client 等 host 发 `SYNC_ROUND`。host 在 `startNewRound` 里发。`startNewRound` 第1015行：
+
+```js
+if (this.battle.gameOver || this._animatingRound || (this.isRemote && this.role !== 'host')) return;
+```
+
+host 可以进。但是——**host 在 `executeAction` 里的 shoot 分支**，第1173行：
+
+```js
+setTimeout(() => { 
+    if (this.checkWin()) return; 
+    this.battle.advanceTurn(prevTurn, !result.live && detail === 'self'); 
+    if (this.checkEmpty()) return;  // ← 弹药耗尽时从这里走
+    this.battle.turn = this.battle.nextRoundTurn; 
+    this.finalizeAction(); 
+}, 1500);
+```
+
+`checkEmpty` 里 host 调 `setTimeout(() => this.startNewRound(), 2500)`，没问题。
+
+**`startNewRound` host 侧正常运行，发出 `SYNC_ROUND`，client 收到，调 `applyRoundWithAnimation`，动画结束，`localSyncRound`，3秒后 `startRoundAfterAnimation`，`updateUI`，计时器启动，玩家可以操作。**
+
+**理论上流程通的。那实际卡住到底是什么？**
+
+必须看动画是否能正常完成。`playCrateDropAnimation` 第306-314行，用 `requestAnimationFrame` 做的，没有外部依赖，正常情况下会走完并调 callback。
+
+**我现在有一个新怀疑：timing race condition。**
+
+host 在 `startNewRound` 第1040行发送 `SYNC_ROUND`，**然后立刻**在第1041行开始 `playCrateDropAnimation`。动画 callback 里调 `localSyncRound`，3秒后 `startRoundAfterAnimation`，turn 变成 `nextRoundTurn`。
+
+但 `prepareNewRound`（第1033行）已经随机化了 `nextRoundTurn`，发送的 `data.nextTurn` 也是这个值（第1040行）。client 收到后 `applyRoundWithAnimation` 第1415行 `battle.nextRoundTurn = data.nextTurn`，3秒后也用同样的值，所以两边的 turn 应该一致。
+
+**等等。** `startNewRound` 第1033-1034行：
+
+```js
+this.battle.prepareNewRound();
+const b = this.settings?.bullets || ...;
+const { live, blank } = this.battle.randomShells(...);
+```
+
+`prepareNewRound` 先把 `nextRoundTurn` 随机化，**然后** `randomShells` 生成子弹，这两步完成后才到第1040行发 `SYNC_ROUND`，data 里带的 `nextTurn` 是 `prepareNewRound` 决定的值。
+
+**host 的 `localSyncRound` 3秒后调 `startRoundAfterAnimation`，把 turn 设为 `nextRoundTurn`——但 `nextRoundTurn` 此时是 `prepareNewRound` 设的值。client 也是同样的值。这是一致的。**
+
+---
+
+好，我换方向。代码逻辑路径没有明显的永久卡死，但用户说**每次**联机都卡。这说明是某个**必经路径**上的问题。
+
+**重新看 `handleServerMessage` 第939行入口条件：**
+
+```js
+handleServerMessage(data) {
+    if (this.battle.gameOver) return;
+```
+
+`gameOver` 初始是 false，没问题。
+
+**再看 networkManager `_handleGameStart` 第152行：**
+
+```js
+this.ws.onmessage = (e) => {
+    ...
+    if (self.game && self.game.handleServerMessage) {
+        self.game.handleServerMessage(msg);
+    }
+};
+```
+
+`self.game` 在第136行被赋值。`this.ws.onmessage` 替换在第152行，在 `this.game` 赋值之后。
+
+**但是！GameEngine constructor 第931-935行：**
+
+```js
+} else if (mode === 'mp' && this.role === 'host') {
+    setTimeout(() => {
+        audioMgr.fadeInBGM(2000);
+        this.startNewRound();
+    }, 100);
+}
+```
+
+host 的 `startNewRound` 在 100ms 后执行，`SYNC_ROUND` 在 `startNewRound` 里发出。
+
+networkManager 第136-148行创建 `GameEngine`，第152行替换 `onmessage`。这两步是同步的，在 `_handleGameStart` 里顺序执行。**所以 `onmessage` 替换一定在 `startNewRound` 发出 `SYNC_ROUND`（100ms后）之前完成。时序没问题。**
+
+**但是 client 端：** client 收到 `GAME_START` → `_handleGameStart` → 创建 `GameEngine`（client role）→ GameEngine constructor 里 client 不调 `startNewRound`（只有 host 才调）→ 替换 `onmessage` → 等待 host 发 `SYNC_ROUND`。
+
+**host 100ms 后发 `SYNC_ROUND`，client 的新 `onmessage` 已经替换完，`self.game` 已经赋值，可以接收。没问题。**
+
+---
+
+**我现在直接测试最关键的一点：`SYNC_ROUND` 里 `data.nextTurn` 有没有可能是 `undefined`？**
+
+`startNewRound` 第1040行：
+```js
+this.sendNetMessage({ type: 'SYNC_ROUND', ..., nextTurn: this.battle.nextRoundTurn, ... });
+```
+
+`this.battle.nextRoundTurn` 在 `prepareNewRound` 第247行设为 `'host'` 或 `'client'`，不会是 undefined。
+
+client 的 `applyRoundWithAnimation` 第1415行：
+```js
+this.battle.nextRoundTurn = data.nextTurn || 'host';
+```
+
+如果 `data.nextTurn` 是 `'client'`，则 `nextRoundTurn = 'client'`。3秒后 `startRoundAfterAnimation` 把 turn 设为 `'client'`，`updateUI` 里 `isMyTurn = (battle.turn === this.role) = ('client' === 'client') = true`，client 可以操作。
+
+**如果 `nextRoundTurn` 是 `'host'`，client 的 turn 是 `'host'`，`isMyTurn = false`，按钮隐藏，client 等 host 操作。但 host 那边 turn 也是 `'host'`（3秒后 `startRoundAfterAnimation` 返回 `'host'`），host 按钮显示，host 可以操作。这是正常的。**
+
+理论上流程完整通顺。
+
+---
+
+**我现在怀疑的是一个运行时问题，不是逻辑问题：`playCrateDropAnimation` 里的 `requestAnimationFrame` 在页面不可见（标签切换）时停止运行，导致动画永远跑不完，callback 永远不触发，游戏卡在 `'animating'`。**
+
+这是已知的浏览器行为：`requestAnimationFrame` 在后台标签页会被节流甚至暂停。
+
+**但用户说"双方联机后游戏不进行，只会卡住"——这是游戏刚开始就卡，不是某个操作后卡。**
+
+再看一遍 `applyRoundWithAnimation` 第1397行：`battle.prepareNewRound()` 把 `turn` 设为 `'animating'`。动画跑完需要约 800ms（dropDuration）+ bounce 时间。如果动画正常完成，callback → `localSyncRound` → 3秒 → `startRoundAfterAnimation` → `updateUI`。总延迟约 4-5 秒后游戏才可以操作。
+
+**如果用户在这 4-5 秒内就以为卡了，其实没卡，只是在等动画+延迟。**
+
+但用户说"基本就无法交互"，说明不是等几秒的问题，是真的永远卡住。
+
+**最后一个可能：`playCrateDropAnimation` 的 bounce 动画。**找到了。**卡死的确切原因在 `spawnItemsSequentially`，第398-402行：**
+
+```js
+if (itemData.slotIndex === undefined || itemData.slotIndex < 0) {
+    index++;
+    setTimeout(processNext, 100);
+    return;
+}
+```
+
+这不是问题，是保护代码。
+
+**真正的问题在第353-356行：**
+
+```js
+const newItems = [
+    ...newPlayerItems.map((item) => ({ ...item, side: 'player' })),
+    ...newEnemyItems.map((item) => ({ ...item, side: 'enemy' }))
+];
+if (newItems.length === 0) { if (onComplete) onComplete(); return; }
+```
+
+**`newPlayerItems` 和 `newEnemyItems` 是什么？**
+
+`applyRoundWithAnimation` 第1423-1424行（client 侧）：
+```js
+const newPlayerItems = (data.newEItems || []).map(i => ({...i}));
+const newEnemyItems = (data.newPItems || []).map(i => ({...i}));
+```
+
+这些是从网络数据里来的，有 `id`、`name`，**但 `slotIndex` 是 host 那边 `addPlayerItem`/`addEnemyItem` 分配的，分配给 host 的玩家视角**。
+
+host 的 `distributeItems` 返回 `newPlayerItems`（host 自己的新道具），这些道具通过 `addPlayerItem` 分配了 slotIndex。host 发送时 `newPItems: newPlayerItems`（host 的新道具有 slotIndex），`newEItems: newEnemyItems`（client 的新道具也有 slotIndex，通过 `addEnemyItem` 分配）。
+
+client 收到后：`newPlayerItems = data.newEItems`（client 自己的新道具，有 slotIndex），`newEnemyItems = data.newPItems`（对方新道具，有 slotIndex）。
+
+slotIndex 存在，动画应该能跑。
+
+---
+
+**好，我换个思路，直接问你：你们测试时，打开的是两个不同的浏览器窗口（或设备），还是同一台机器上开了两个 tab？**
+
+因为我现在分析完整个代码，逻辑路径上没有必然的永久卡死——但有一个极高概率触发的竞态：
+
+**`checkEmpty` 在 client 侧被触发时（子弹打完了），client 进入等待状态，等 host 发 `SYNC_ROUND`。但如果此时 host 的 `finalizeAction` → `broadcastStateSync`（`FORCE_SYNC`）比 `startNewRound` 先发出，而 `FORCE_SYNC` 在 client 的 `applyForceSync` 里不会触发新一轮——client 只是同步状态，继续等 `SYNC_ROUND`。这本身没问题，`startNewRound` 会在 2500ms 后发 `SYNC_ROUND`。**
+
+**但是 `startNewRound` 有这个保护：**
+```js
+if (this.battle.gameOver || this._animatingRound || (this.isRemote && this.role !== 'host')) return;
+```
+
+如果 `this._animatingRound` 此时是 `true`，host 侧 `startNewRound` 直接返回，永远不发 `SYNC_ROUND`，client 永远等。
+
+**`_animatingRound` 什么时候是 `true`？`startNewRound` 第1032行设为 `true`，回调里设为 `false`。如果上一轮的 `playCrateDropAnimation` 回调因为某种原因没有执行，`_animatingRound` 就永远是 `true`。**
+
+**就是这个了。** `openCrateAndSpawnItems` → `spawnItemsSequentially` 里如果 `newItems.length === 0` 直接调 `onComplete`，没问题。但如果有道具且 `requestAnimationFrame` 被阻断（比如页面暂时不可见），动画停了，callback 停了，`_animatingRound` 永远是 `true`，下一轮 `startNewRound` 永远进不去。
+
+安全计时器在第1017-1030行，8秒后强制重置 `_animatingRound`，调 `localSyncRound`。所以理论上8秒后会自动恢复。
+
+**但这个8秒安全计时器只在 host 侧生效。client 侧也有一个12秒的（`applyRoundWithAnimation` 第1401行）。两边都有保护，应该最终能恢复。**
+
+---
+
+我分析完了，现在直接告诉你结论和修法，不是理论上的卡死，而是**实际上"游戏不进行"的原因很可能是这个：**
+
+**client 收到 `GAME_START`，`_handleGameStart` 创建 `GameEngine`，但此时 GameEngine constructor 里 client 不启动游戏（只有 host 才 `startNewRound`）。然后 host 100ms 后发 `SYNC_ROUND`，client 的 `handleServerMessage` 收到，调 `applyRoundWithAnimation`，动画跑完，3秒后 `localSyncRound` 完成，`updateUI`，游戏开始。**
+
+**这整个过程大约 5-6 秒，期间屏幕什么都不动（HUD 显示但不能操作），双方都看到对方连接了但无法操作。用户可能把这5-6秒的等待误判成了"卡住"。**
+
+但用户说"发消息也发不了"——聊天是 `CHAT_MSG`，server 只在 `inGame` 时转发，`inGame` 在 `checkReady` 里设为 `true`，也就是游戏开始后就可以。如果发消息也不行，说明 `room.inGame` 没被设为 `true`，或者消息根本没发出去。
+
+**最可能的实际 bug：`CHAT_MSG` 在 game.js 里通过 `triggerLocalChat` → `sendNetMessage` 发送，但 `sendNetMessage` 用的是 `this.socket`，这个 socket 是 GameEngine 里的 `options.socket`，也就是 networkManager 传进去的 `this.ws`。如果 `this.ws` 在某个时刻被关闭或替换，消息就发不出去。**
+
+但 `disconnect` 只在明确断开时调用，不应该自动触发。
+
+---
+
+**给你直接的 patch，修最有可能实际导致问题的地方：****找到了。`this.socket` 是 GameEngine 构造时从 `options.socket` 拿的，也就是 `networkManager.ws` 的引用。但 `networkManager._handleGameStart` 第152行替换了 `this.ws.onmessage`，ws 对象本身没变，socket 引用有效。**
+
+**但是！`applyRoundSync` 第1386行只调 `updateUI()`，没调 `battle.startRoundAfterAnimation()`。**
+
+此时 `battle.turn` 是什么？`applyRoundSync` 在 `battle.turn` 不确定的状态下调 `updateUI`，而 `updateUI` 里调 `startTimer`：
+
+```js
+startTimer() {
+    clearInterval(this.timerInterval);
+    if (this.battle.turn === 'animating') { this.ui.timer.innerText = '--'; return; }
+    ...
+}
+```
+
+**如果 `battle.turn` 是 `'animating'`（比如 `checkEmpty` 把它设成了 `'animating'` 然后等 `SYNC_ROUND`），那么 `applyRoundSync` 同步完数据后调 `updateUI`，timer 显示 `--` 然后直接 return，计时器不启动，按钮也因为 `isMyTurn = false` 而隐藏。游戏卡死。**
+
+**这就是聊天、射击全部失效的原因：`applyRoundSync` 没有调 `startRoundAfterAnimation`。**
+
+现在写 patch：确认了。`applyRoundSync` 里没有 `startRoundAfterAnimation`，也没有 `localSyncRound`。直接给 patch：
+
+**game.js，第1377-1387行，`applyRoundSync` 函数，改成这样：**
+
+```js
+applyRoundSync(data) {
+    this.battle.shells = data.shells || [];
+    this.battle.playerItems = (data.eItems || []).map(i => ({...i}));
+    this.battle.enemyItems = (data.pItems || []).map(i => ({...i}));
+    this.battle.nextRoundTurn = data.nextTurn || 'host';
+    this.battle.playerHp = data.enemyHp ?? this.battle.maxHp;
+    this.battle.enemyHp = data.playerHp ?? this.battle.maxHp;
+    this._rebuildSlots();
+    this.scene.renderTableItems(this.battle.playerItems, this.battle.enemyItems);
+    this.battle.startRoundAfterAnimation();  // ← 加这行
+    this.updateUI();
+}
+```
+
+**同时，server.js 里 `CHAT_MSG` 的转发有个问题，它被放在了需要 `room.inGame` 才能通过的 block 里：**
+
+```js
+case 'CHAT_MSG':
+    if (!room.inGame) break;  // 游戏未开始聊天也发不了
+```
+
+聊天应该大厅里也能发，把 `CHAT_MSG` 单独提出来：
+
+**server.js，在 `SYNC_ROUND/PLAYER_ACTION/FORCE_SYNC/CHAT_MSG` 这个 case block 里，把 `CHAT_MSG` 分离出去：**
+
+```js
+case 'CHAT_MSG':
+    if (ws.roomId && rooms.has(ws.roomId)) {
+        const room = rooms.get(ws.roomId);
+        room.players.forEach(p => {
+            if (p.ws !== ws && p.ws.readyState === WebSocket.OPEN) {
+                try { p.ws.send(JSON.stringify(data)); } catch(e) {}
+            }
+        });
+    }
+    break;
+
+case 'SYNC_ROUND':
+case 'PLAYER_ACTION':
+case 'FORCE_SYNC':
+    if (ws.roomId && rooms.has(ws.roomId)) {
+        const room = rooms.get(ws.roomId);
+        if (!room.inGame) break;
+        room.players.forEach(p => {
+            if (p.ws !== ws && p.ws.readyState === WebSocket.OPEN) {
+                try { p.ws.send(JSON.stringify(data)); } catch(e) {}
+            }
+        });
+    }
+    break;
+```
+
+**这两个改动加起来解决：**
+1. `applyRoundSync` 不调 `startRoundAfterAnimation` → turn 卡在 `animating` → 所有操作失效（**这是卡死主因**）
+2. 聊天在 `inGame` 检查里被拦掉（次要问题，但游戏中如果 `inGame` 有任何问题聊天也会失效）

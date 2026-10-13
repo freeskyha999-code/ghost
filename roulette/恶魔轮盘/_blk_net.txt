@@ -1,0 +1,179 @@
+    // ================= 联机同步：房主权威 + 客户端按序重放 =================
+    // 约定：每台机器的 BattleSystem 都按"本机视角"存放：'host' = 我，'client' = 对手，
+    //       playerHp / playerItems = 我的，enemy* = 对手的。客户端收到房主数据时整体镜像。
+    _isMyTurn() { return this.battle.turn === 'host'; }
+    _mirrorRole(r) { return r === 'host' ? 'client' : (r === 'client' ? 'host' : r); }
+    _markBusy() { if (!this.isRemote) return; this._evBusy = true; this._evBusySince = Date.now(); }
+    _endAct() {
+        if (!this.isRemote || !this._evBusy) return;
+        this._evBusy = false;
+        if (this.role === 'client') setTimeout(() => this._pumpEvents(), 0);
+    }
+
+    handleServerMessage(data) {
+        if (!data) return;
+        if (data.type === 'CHAT_MSG') {
+            if (data.senderRole !== this.role) this.handleReceivedChat(data.text, data.qId, data.senderRole);
+            return;
+        }
+        if (data.type === 'SETTINGS_UPDATED') { this.applySettings(data.settings); return; }
+        if (!this.isRemote) return;
+        if (this.battle.gameOver && data.type !== 'SYNC_ROUND') return;
+        if (this.role === 'host') {
+            // 房主是唯一权威：客户端只发"请求"
+            if (data.type === 'PLAYER_ACTION' && data.actor === 'client') this._hostHandleClientAction(data);
+            else if (data.type === 'FORCE_SYNC' && data.req) this.broadcastStateSync(true);
+            return;
+        }
+        // 客户端：房主发来的事件按到达顺序排队重放
+        if (data.type === 'SYNC_ROUND' || data.type === 'PLAYER_ACTION' || data.type === 'FORCE_SYNC') {
+            this._evQueue.push(data);
+            this._pumpEvents();
+        }
+    }
+
+    _hostHandleClientAction(data) {
+        const idle = this.battle.turn === 'client' && !this._evBusy && !this._animatingRound && !this.battle.gameOver;
+        if (!idle) { this.broadcastStateSync(true); return; }   // 过期/重复请求：回一份快照让对方解锁
+        this._markBusy();
+        this.sendNetMessage({ type: 'PLAYER_ACTION', actionType: data.actionType, detail: data.detail, actor: 'client', relay: true });
+        this.executeAction(data.actionType, data.detail, 'client', null);
+    }
+
+    _pumpEvents() {
+        if (!this.isRemote || this.role !== 'client') return;
+        while (!this._evBusy && this._evQueue.length) {
+            const ev = this._evQueue.shift();
+            if (ev.type === 'FORCE_SYNC') {
+                if (ev.ack) this._pendingReq = false;
+                if (!this.battle.gameOver) this._clientApplySnapshot(ev.state);
+                continue;
+            }
+            if (ev.type === 'SYNC_ROUND') {
+                if (this.battle.gameOver) this._clientAutoRestart();
+                this._markBusy();
+                try {
+                    if (ev.newPItems && ev.newEItems) this.applyRoundWithAnimation(ev);
+                    else { this.applyRoundSync(ev); this.spawnItemToasts((ev.eItems || []).map(i => i.name)); this._endAct(); }
+                } catch (e) { console.error('SYNC_ROUND 处理出错:', e); this._endAct(); }
+                break;
+            }
+            if (ev.type === 'PLAYER_ACTION') {
+                if (this.battle.gameOver) continue;
+                this._markBusy();
+                try { this.executeAction(ev.actionType, ev.detail, ev.actor, null); }
+                catch (e) { console.error('PLAYER_ACTION 重放出错:', e); this._endAct(); }
+                break;
+            }
+        }
+    }
+
+    _clientAutoRestart() {
+        const es = document.getElementById('end-screen');
+        if (es) es.style.display = 'none';
+        this.battle.resetMatch();
+        this._animatingRound = false;
+        this.updateScoreDisplay();
+        this.scene.clearDiscardedItems(); this.scene.resetGun();
+        this.scene.renderTableItems([], []);
+    }
+
+    // 房主：当前权威状态（绝对视角 = 房主视角）
+    buildState() {
+        const b = this.battle;
+        return {
+            shells: b.shells.slice(),
+            pItems: b.playerItems.map(i => ({ ...i })), eItems: b.enemyItems.map(i => ({ ...i })),
+            playerHp: b.playerHp, enemyHp: b.enemyHp,
+            playerHandcuffed: b.playerHandcuffed, enemyHandcuffed: b.enemyHandcuffed,
+            playerShocked: b.playerShocked, enemyShocked: b.enemyShocked,
+            playerPacemaker: b.playerPacemaker, enemyPacemaker: b.enemyPacemaker,
+            gunDamage: b.gunDamage, knownNextShell: b.knownNextShell ?? null,
+            turn: b.turn, nextTurn: b.nextRoundTurn, wins: b.wins, losses: b.losses
+        };
+    }
+    broadcastStateSync(ack = false) {
+        if (!this.isRemote || this.role !== 'host') return;
+        this.sendNetMessage({ type: 'FORCE_SYNC', state: this.buildState(), ack: !!ack });
+    }
+
+    _tableSig() {
+        const f = (l) => l.map(i => i.id + ':' + i.slotIndex).join(',');
+        return f(this.battle.playerItems) + '/' + f(this.battle.enemyItems);
+    }
+    _fullSig() {
+        const b = this.battle;
+        return [b.turn, b.playerHp, b.enemyHp, b.shells.length, b.playerHandcuffed, b.enemyHandcuffed, b.playerShocked, b.enemyShocked,
+                b.playerPacemaker, b.enemyPacemaker, b.gunDamage, b.wins, b.losses, this._tableSig()].join('|');
+    }
+
+    // 客户端：把房主的绝对状态镜像成本机视角
+    _applyMirroredState(s) {
+        const b = this.battle;
+        const prevP = b.playerPacemaker, prevE = b.enemyPacemaker;
+        const before = this._tableSig();
+        if (s.enemyHp !== undefined) b.playerHp = s.enemyHp;
+        if (s.playerHp !== undefined) b.enemyHp = s.playerHp;
+        if (Array.isArray(s.shells)) b.shells = s.shells.slice();
+        if (s.eItems) b.playerItems = s.eItems.map(i => ({ ...i }));
+        if (s.pItems) b.enemyItems = s.pItems.map(i => ({ ...i }));
+        b.playerHandcuffed = !!s.enemyHandcuffed; b.enemyHandcuffed = !!s.playerHandcuffed;
+        b.playerShocked = !!s.enemyShocked; b.enemyShocked = !!s.playerShocked;
+        b.playerPacemaker = !!s.enemyPacemaker; b.enemyPacemaker = !!s.playerPacemaker;
+        b.gunDamage = s.gunDamage || 1;
+        b.knownNextShell = s.knownNextShell ?? null;
+        if (s.nextTurn) b.nextRoundTurn = this._mirrorRole(s.nextTurn);
+        if (typeof s.wins === 'number' && typeof s.losses === 'number') { b.wins = s.losses; b.losses = s.wins; }
+        this._rebuildSlots();
+        if (this._tableSig() !== before) this.scene.renderTableItems(b.playerItems, b.enemyItems);
+        if (b.playerPacemaker !== prevP) { if (b.playerPacemaker) this.scene.showPacemaker('host'); else this.scene.removePacemaker('host'); }
+        if (b.enemyPacemaker !== prevE) { if (b.enemyPacemaker) this.scene.showPacemaker('client'); else this.scene.removePacemaker('client'); }
+        this.updateScoreDisplay();
+    }
+
+    _clientApplySnapshot(s) {
+        if (!s) return;
+        const before = this._fullSig();
+        this._applyMirroredState(s);
+        if (s.turn && s.turn !== 'animating') this.battle.turn = this._mirrorRole(s.turn);
+        if (this._fullSig() !== before) this.updateUI();
+    }
+
+    applyForceSync(stateData) { this._clientApplySnapshot(stateData); }
+
+    // 看门狗：任何原因导致回合卡住时自动恢复
+    _netWatchdog() {
+        if (!this.isRemote || this.battle.gameOver) return;
+        const now = Date.now();
+        if (this._evBusy && now - this._evBusySince > 30000) {
+            console.warn('[net] 动作/回合超时，强制恢复');
+            this._evBusy = false; this._animatingRound = false;
+            if (this.role === 'host') {
+                if (this.battle.turn === 'animating') this.battle.turn = this.battle.nextRoundTurn || 'host';
+                this.updateUI(); this.broadcastStateSync();
+            } else {
+                this.sendNetMessage({ type: 'FORCE_SYNC', req: true });
+                this._pumpEvents();
+            }
+        }
+        if (this._pendingReq && now - this._pendingSince > 6000) {
+            this._pendingReq = false; this.updateUI();
+            this.sendNetMessage({ type: 'FORCE_SYNC', req: true });
+        }
+        const stuck = this.battle.turn === 'animating' && !this._evBusy && !this._animatingRound && this._evQueue.length === 0;
+        if (stuck) {
+            if (!this._animSince) this._animSince = now;
+            else if (now - this._animSince > 9000) {
+                this._animSince = now;
+                if (this.role === 'host') {
+                    const t = this.battle.nextRoundTurn;
+                    this.battle.turn = (t && t !== 'animating') ? t : 'host';
+                    this.updateUI(); this.broadcastStateSync();
+                } else this.sendNetMessage({ type: 'FORCE_SYNC', req: true });
+            }
+        } else this._animSince = 0;
+        if (this.role === 'host') {
+            if (!this._evBusy && this.battle.turn !== 'animating' && now - this._lastBeat > 4000) { this._lastBeat = now; this.broadcastStateSync(); }
+        } else if (!this._evBusy && this._evQueue.length) this._pumpEvents();
+    }
+

@@ -2,41 +2,297 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>老师回头了！｜GHOST 游戏库</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#050609">
+<meta name="description" content="基于实时摄像头与面部动作识别的潜行游戏。无按钮操作：转头选餐、张嘴进食、快速左右摆头擦去痕迹。">
+<title>SNEAKY LUNCH — 老师回头了</title>
 <style>
-:root{color-scheme:light;--ink:#25283a;--pink:#ff8ea1;--cream:#fff8e9;--mint:#8de0c1;--yellow:#ffd36d}*{box-sizing:border-box}body{margin:0;padding:16px;min-height:100vh;background:linear-gradient(135deg,#ccefff,#fff0d9 55%,#ffdbe5);color:var(--ink);font:15px/1.5 system-ui,"Microsoft YaHei",sans-serif}.wrap{max-width:960px;margin:auto}.back{display:inline-block;margin:0 0 12px;font-weight:800;color:#39344e;text-decoration:none}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.head h1{font-size:clamp(22px,4vw,34px);margin:0}.pill{border:2px solid var(--ink);border-radius:99px;padding:6px 12px;background:white;font-weight:800}.panel{border:3px solid var(--ink);border-radius:22px;overflow:hidden;background:#fffdf7;box-shadow:0 10px 28px #27304a20}.teacher{padding:14px;background:#e3f6ff;border-bottom:3px solid var(--ink);display:flex;gap:14px;align-items:center}.teacherFace{font-size:54px;display:grid;place-items:center;min-width:78px;height:78px;border:3px solid var(--ink);border-radius:20px;background:#ffe0b6}.teacherText{flex:1}.teacherText b{font-size:19px}.speech{margin-top:4px;background:white;border:2px solid var(--ink);border-radius:12px;padding:7px 10px}.game{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px}.camBox{min-width:0;background:#ffe8ed;border:3px solid var(--ink);border-radius:18px;padding:12px;text-align:center}.videoWrap{position:relative;overflow:hidden;background:#161616;border:3px solid var(--ink);border-radius:18px;margin:12px auto 8px;aspect-ratio:4/5;max-width:340px}.videoWrap video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}.cameraMsg{position:absolute;inset:0;display:grid;place-items:center;color:white;padding:20px;text-align:center;background:#171717}.cameraMsg.hidden{display:none}.status{font-weight:900;min-height:24px}.actions{display:flex;gap:8px}.btn{flex:1;border:3px solid var(--ink);border-radius:12px;padding:10px 8px;background:var(--yellow);font-weight:900;cursor:pointer}.btn.wipe{background:#d8f4ff}.btn:disabled{opacity:.45;cursor:not-allowed}.foods{display:grid;gap:10px}.food{display:flex;align-items:center;gap:12px;text-align:left;padding:10px;border:3px solid var(--ink);border-radius:15px;background:#fff;cursor:pointer;font:inherit;font-weight:800}.food:disabled{opacity:.45;cursor:not-allowed}.dish{font-size:35px;min-width:54px;height:54px;display:grid;place-items:center;background:#fff0cd;border-radius:12px}.food small{display:block;color:#70778a;font-size:12px}.footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 15px;border-top:3px solid var(--ink);font-weight:800}.overlay{position:fixed;inset:0;background:#17192bcc;display:grid;place-items:center;padding:18px;z-index:5}.overlay.hidden{display:none}.modal{max-width:460px;width:100%;padding:24px;background:var(--cream);border:4px solid var(--ink);border-radius:22px;text-align:center}.modal h2{margin:4px 0 10px}.modal p{text-align:left;line-height:1.7}.primary{background:var(--pink);border:3px solid var(--ink);border-radius:12px;padding:12px 22px;font-weight:1000;font-size:16px;cursor:pointer}.notice{font-size:12px;color:#606a7b;margin:8px 0}@media(max-width:620px){body{padding:8px}.game{grid-template-columns:1fr;padding:9px;gap:9px}.teacher{padding:10px}.teacherFace{min-width:62px;height:62px;font-size:42px}.teacherText b{font-size:16px}.foods{grid-template-columns:repeat(3,minmax(0,1fr))}.food{padding:7px 4px;flex-direction:column;text-align:center;gap:4px}.dish{width:100%;height:48px}.food small{font-size:10px}.camBox{padding:8px}.videoWrap{max-width:240px}.footer{font-size:12px}}
+:root{color-scheme:dark;--white:#f4f0e8;--muted:#aaa9b3;--line:rgba(255,255,255,.18);--glass:rgba(8,10,16,.13);--acid:#d7f58b;--red:#ff6b79;--gold:#efc98a}
+*{box-sizing:border-box}html,body{height:100%;width:100%;margin:0;overflow:hidden;background:#050609;color:var(--white);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;touch-action:none}
+#video{position:fixed;inset:0;width:100%;height:100%;display:block;object-fit:cover;transform:scaleX(-1);background:#08090d;filter:brightness(.74) contrast(1.1) saturate(.7);z-index:0}
+#grade{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 43%,transparent 22%,rgba(2,3,7,.2) 62%,rgba(2,3,7,.72) 115%),linear-gradient(180deg,rgba(2,3,6,.52),transparent 24%,transparent 60%,rgba(2,3,6,.5));}
+#world{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+#grain{position:fixed;inset:-50%;z-index:3;pointer-events:none;opacity:.095;transform:rotate(7deg);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.38'/%3E%3C/svg%3E")}
+#scanline{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.11;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.045) 4px,transparent 5px)}
+.hud{position:fixed;z-index:5;pointer-events:none;text-shadow:0 2px 16px rgba(0,0,0,.6)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase}
+#topLeft{top:calc(env(safe-area-inset-top,0px) + 23px);left:clamp(18px,3vw,42px);display:flex;align-items:flex-start;gap:13px}
+.mark{height:31px;width:31px;border:1px solid rgba(255,255,255,.53);display:grid;place-items:center;font:800 13px ui-monospace,monospace;transform:rotate(45deg);background:rgba(4,6,10,.09);backdrop-filter:blur(4px)}.mark span{transform:rotate(-45deg)}
+.brand{font-size:11px;letter-spacing:.28em;color:#f7f3eb;font-weight:700}.brandSub{font-size:9px;color:rgba(244,240,232,.56);margin-top:7px;letter-spacing:.19em}
+#topRight{top:calc(env(safe-area-inset-top,0px) + 22px);right:clamp(18px,3vw,42px);display:flex;gap:15px;align-items:center;text-align:right}
+#stateDot{width:7px;height:7px;border-radius:50%;background:var(--acid);box-shadow:0 0 15px currentColor;display:inline-block;margin-left:9px}.stateLine{font-size:10px;color:rgba(244,240,232,.9)}.stateSmall{font-size:9px;color:rgba(244,240,232,.48);margin-top:7px;letter-spacing:.16em}
+#phaseTitle{position:fixed;z-index:5;top:18%;left:50%;transform:translateX(-50%);width:min(90vw,680px);text-align:center;pointer-events:none;opacity:0;transition:opacity .45s;text-shadow:0 2px 22px #000}.eyebrow{font-size:9px;letter-spacing:.34em;color:var(--gold);margin-bottom:9px}.phaseBig{font-size:clamp(20px,3.5vw,39px);font-weight:600;letter-spacing:.04em;line-height:1.12}.phaseDetail{margin-top:10px;color:rgba(245,242,235,.68);font-size:11px;letter-spacing:.08em}
+#corners{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:.58}.corner{position:absolute;width:26px;height:26px;border-color:rgba(238,236,225,.54);border-style:solid}.tl{top:18px;left:18px;border-width:1px 0 0 1px}.tr{top:18px;right:18px;border-width:1px 1px 0 0}.bl{bottom:18px;left:18px;border-width:0 0 1px 1px}.br{bottom:18px;right:18px;border-width:0 1px 1px 0}
+#bottomHud{position:fixed;z-index:5;left:clamp(18px,3vw,42px);right:clamp(18px,3vw,42px);bottom:calc(env(safe-area-inset-bottom,0px) + 23px);display:flex;align-items:flex-end;justify-content:space-between;gap:22px;pointer-events:none}
+#mission{min-width:128px;max-width:230px}.label{font-size:9px;letter-spacing:.2em;color:rgba(244,240,232,.55)}#bites{font-size:clamp(22px,3vw,34px);line-height:1.15;letter-spacing:-.06em;font-weight:520;margin-top:7px;font-variant-numeric:tabular-nums}#bites small{font-size:12px;letter-spacing:.1em;color:rgba(244,240,232,.48);margin-left:5px}.progress{display:flex;gap:4px;margin-top:11px}.progress i{display:block;width:15px;height:3px;background:rgba(255,255,255,.23);transition:background .2s,box-shadow .2s}.progress i.done{background:var(--acid);box-shadow:0 0 8px #d7f58b77}
+#dishStrip{display:flex;align-items:stretch;justify-content:center;gap:clamp(5px,1vw,12px);flex:1;max-width:590px}.dish{width:clamp(84px,14vw,160px);min-width:0;position:relative;padding:12px 12px 10px;border-top:1px solid rgba(255,255,255,.18);background:linear-gradient(180deg,rgba(8,10,16,.16),rgba(8,10,16,.04));backdrop-filter:blur(2px);opacity:.62;transition:opacity .22s,border-color .22s,transform .22s}.dish::before{content:"";position:absolute;top:-1px;left:0;width:0;height:2px;background:var(--acid);transition:width .2s}.dish.selected{opacity:1;border-top-color:rgba(215,245,139,.8);transform:translateY(-4px)}.dish.selected::before{width:100%}.dish.done{opacity:.35}.dishNo{font-size:9px;color:rgba(244,240,232,.5)}.dishName{font-size:clamp(11px,1.2vw,14px);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.06em}.dishMeta{font:9px ui-monospace,monospace;color:rgba(244,240,232,.55);margin-top:6px;white-space:nowrap}.dish.selected .dishNo,.dish.selected .dishMeta{color:var(--acid)}
+#gesture{min-width:140px;text-align:right}.gestureMain{font-size:10px;letter-spacing:.13em}.gestureSub{font-size:9px;color:rgba(244,240,232,.55);margin-top:7px;line-height:1.7;max-width:205px;margin-left:auto}
+#toast{position:fixed;z-index:8;bottom:calc(env(safe-area-inset-bottom,0px) + 125px);left:50%;transform:translate(-50%,8px);opacity:0;transition:opacity .18s,transform .18s;text-align:center;pointer-events:none;width:max-content;max-width:90vw;text-shadow:0 3px 20px #000}.toastTop{font:9px ui-monospace,monospace;letter-spacing:.3em;color:var(--acid)}.toastText{font-size:clamp(14px,2vw,19px);letter-spacing:.05em;margin-top:7px}.showToast{opacity:1!important;transform:translate(-50%,0)!important}
+#boot{position:fixed;z-index:10;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;background:radial-gradient(ellipse at center,rgba(5,7,12,.38),rgba(5,7,12,.06) 66%,rgba(5,7,12,.23));pointer-events:none;transition:opacity 1s}.bootInner{width:min(560px,92vw);padding:clamp(22px,5vw,54px);border:1px solid rgba(255,255,255,.2);background:rgba(6,8,13,.12);backdrop-filter:blur(5px)}.bootKicker{font:10px ui-monospace,monospace;letter-spacing:.38em;color:var(--gold)}#boot h1{font-size:clamp(34px,7vw,76px);line-height:.96;letter-spacing:-.055em;font-weight:520;margin:23px 0 18px}#boot h1 em{font-style:normal;color:var(--acid)}#bootText{font-size:12px;line-height:2;color:rgba(244,240,232,.75);letter-spacing:.035em;max-width:420px;margin:0 auto}.bootRule{width:100%;height:1px;margin:25px 0 17px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent)}#bootStatus{font:9px ui-monospace,monospace;letter-spacing:.2em;color:var(--acid)}.bootPrivacy{font-size:9px;color:rgba(244,240,232,.42);margin-top:14px;letter-spacing:.05em}
+#endCard{position:fixed;z-index:11;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;background:rgba(4,5,9,.24);backdrop-filter:blur(2px);pointer-events:none}#endCard.visible{display:flex}.endInner{max-width:590px;padding:38px 24px;border-top:1px solid rgba(255,255,255,.28);border-bottom:1px solid rgba(255,255,255,.28);background:rgba(3,4,8,.16)}#endKicker{font:10px ui-monospace,monospace;letter-spacing:.4em;color:var(--gold)}#endTitle{font-size:clamp(37px,7vw,74px);letter-spacing:-.06em;font-weight:500;margin:18px 0 12px}#endText{font-size:13px;line-height:2;color:rgba(244,240,232,.76)}#restartNote{font:9px ui-monospace,monospace;letter-spacing:.18em;color:rgba(244,240,232,.42);margin-top:24px}
+#errorPanel{position:fixed;z-index:12;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);left:50%;transform:translateX(-50%);max-width:min(620px,90vw);padding:11px 17px;border:1px solid rgba(255,107,121,.45);background:rgba(15,5,9,.42);backdrop-filter:blur(5px);font-size:11px;line-height:1.7;color:#ffd8db;display:none;text-align:center;pointer-events:none}
+@media(max-width:620px){#topLeft{top:calc(env(safe-area-inset-top,0px) + 15px);left:17px}.mark{width:27px;height:27px}.brand{font-size:10px}.brandSub{font-size:8px}#topRight{top:calc(env(safe-area-inset-top,0px) + 15px);right:17px}.stateLine{font-size:9px}.stateSmall{font-size:8px}#phaseTitle{top:17%}.phaseDetail{font-size:10px}#bottomHud{left:15px;right:15px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);flex-wrap:wrap;gap:12px;align-items:end}#mission{order:0;min-width:120px;max-width:43%}#gesture{order:1;min-width:110px;max-width:48%}.gestureSub{font-size:8px}#dishStrip{order:2;flex-basis:100%;max-width:none;gap:5px}.dish{flex:1;width:0;padding:9px 8px 8px}.dishName{font-size:11px}.dishMeta{font-size:8px}.label{font-size:8px}#bites{font-size:25px}.progress{margin-top:8px}.progress i{width:11px}#toast{bottom:calc(env(safe-area-inset-bottom,0px) + 164px)}.corner{width:17px;height:17px}.tl{top:8px;left:8px}.tr{top:8px;right:8px}.bl{bottom:8px;left:8px}.br{bottom:8px;right:8px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body><main class="wrap">
-<a class="back" href="../../">← 返回 GHOST 游戏库</a>
-<div class="head"><h1>🤫 老师回头了！</h1><span class="pill" id="count">偷吃 0 / 9 口</span></div>
-<section class="panel">
-<div class="teacher"><div class="teacherFace" id="teacherFace">👩‍🏫</div><div class="teacherText"><b id="teacherState">老师正在看你</b><div class="speech" id="speech">先点击开始，允许使用摄像头。</div><div class="notice" id="timer">摄像头只在本页面本地显示，不会上传。</div></div></div>
-<div class="game">
-<section class="camBox"><b>🤳 真实摄像头自拍</b><div class="videoWrap"><video id="video" autoplay playsinline muted></video><div class="cameraMsg" id="cameraMsg">点击「开启摄像头并开始」<br>浏览器会弹出权限请求</div></div><div class="status" id="faceStatus">尚未开启摄像头</div><div class="actions"><button class="btn" id="mouthBtn" disabled>😮 张嘴</button><button class="btn wipe" id="wipeBtn" disabled>🧻 擦嘴</button></div><p class="notice">当前版本用按钮控制游戏动作；摄像头用于真实实时自拍，暂不自动识别嘴部或食物残渣。</p></section>
-<section><b>🥢 三种午饭，每种吃 3 口</b><div class="foods" style="margin-top:10px"><button class="food" data-food="0" disabled><span class="dish">🍚</span><span>香喷喷米饭<small id="f0">还剩 3 口</small></span></button><button class="food" data-food="1" disabled><span class="dish">🍜</span><span>热乎乎面条<small id="f1">还剩 3 口</small></span></button><button class="food" data-food="2" disabled><span class="dish">🍙</span><span>圆滚滚饭团<small id="f2">还剩 3 口</small></span></button></div><p class="notice">老师背过身时张嘴并选择食物。吃完会留下痕迹，及时擦嘴；预警时立即收手。</p></section>
+<body>
+<video id="video" autoplay muted playsinline></video><div id="grade"></div><canvas id="world" aria-hidden="true"></canvas><div id="grain"></div><div id="scanline"></div>
+<div id="corners" aria-hidden="true"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i></div>
+<header class="hud" id="topLeft"><div class="mark"><span>G</span></div><div><div class="brand">GHOST / INTERACTIVE</div><div class="brandSub mono">CAMERA GAME · PROTOCOL 01</div></div></header>
+<div class="hud" id="topRight"><div><div class="stateLine mono"><span id="phaseLabel">LINKING CAMERA</span><span id="stateDot"></span></div><div class="stateSmall mono" id="teacherSub">FACIAL TRACKING · STANDBY</div></div></div>
+<div id="phaseTitle"><div class="eyebrow mono" id="phaseEyebrow">WINDOW OF OPPORTUNITY</div><div class="phaseBig" id="phaseBig">老师正在看向别处</div><div class="phaseDetail" id="phaseDetail">保持安静，快速行动。</div></div>
+<div id="bottomHud" class="hud">
+ <div id="mission"><div class="label mono">LUNCH QUOTA / 已进食</div><div id="bites">00<small>/ 09 BITES</small></div><div class="progress" id="progress"></div></div>
+ <div id="dishStrip">
+  <div class="dish" data-lane="0"><div class="dishNo mono">01 / RICE</div><div class="dishName">白米饭</div><div class="dishMeta" id="dishMeta0">0 / 3 BITES</div></div>
+  <div class="dish" data-lane="1"><div class="dishNo mono">02 / NOODLES</div><div class="dishName">热汤面</div><div class="dishMeta" id="dishMeta1">0 / 3 BITES</div></div>
+  <div class="dish" data-lane="2"><div class="dishNo mono">03 / ONIGIRI</div><div class="dishName">烤饭团</div><div class="dishMeta" id="dishMeta2">0 / 3 BITES</div></div>
+ </div>
+ <div id="gesture"><div class="gestureMain mono" id="gestureMain">FACE TRACKING / SEARCH</div><div class="gestureSub" id="gestureSub">稍微左右转头选餐 · 张嘴进食 · 快速左右摆头擦嘴</div></div>
 </div>
-<div class="footer"><span>🧻 纸巾无限 · 嘴边痕迹：<b id="crumbs">干净</b></span><button class="btn" id="restart" style="flex:0 0 auto">↻ 重来</button></div>
-</section></main>
-<div class="overlay" id="intro"><div class="modal"><div style="font-size:48px">🤫🍱</div><h2>午休偷吃大作战</h2><p>开启真实摄像头后，趁老师背过身偷吃。每种饭 3 口，共 9 口。嘴边有痕迹要用纸巾擦干净；老师回头检查时，张着嘴或没擦干净就失败。</p><p><b>摄像头权限：</b>本游戏托管在 HTTPS 的 GitHub Pages 上。点击开始后浏览器会申请摄像头权限；视频仅显示在本页面，不会上传。</p><button class="primary" id="start">📷 开启摄像头并开始</button><div class="notice" id="err"></div></div></div>
-<div class="overlay hidden" id="end"><div class="modal"><div style="font-size:48px" id="endIcon">🎉</div><h2 id="endTitle">挑战结束</h2><p id="endText"></p><button class="primary" id="again">再玩一次</button></div></div>
-<script>
-(()=>{const $=id=>document.getElementById(id);const foodBtns=[...document.querySelectorAll('[data-food]')];let stream=null,counts=[0,0,0],crumbs=0,bites=0,mouth=false,phase='idle',running=false,timer=null,action=false;
-const safe=['老师去看窗外了，快抓紧时间！','老师背过去写板书了！','好机会，老师暂时没看你。'];const warn=['老师停下写字了……注意！','老师好像要回头了！','老师听见声音，准备检查！'];
-function phaseSet(p){phase=p;$('teacherFace').textContent=p==='away'?'👩‍🏫':p==='warning'?'🙄':'👀';$('teacherFace').style.transform=p==='away'?'rotateY(180deg)':'';$('teacherState').textContent=p==='away'?'老师背对着你':p==='warning'?'⚠️ 老师预警！':'老师正在检查！';$('speech').textContent=p==='away'?safe[Math.random()*safe.length|0]:p==='warning'?warn[Math.random()*warn.length|0]:'让我看看你有没有偷吃！';if(p==='looking'&&(mouth||crumbs>0)){lose(mouth?'老师发现你还张着嘴！':'老师发现你嘴边有食物痕迹！');return}controls()}
-function nextPhase(){clearTimeout(timer);if(!running)return;let wait=phase==='away'?4800+Math.random()*2200:phase==='warning'?1800:2400;timer=setTimeout(()=>{if(!running)return;if(phase==='away')phaseSet('warning');else if(phase==='warning')phaseSet('looking');else phaseSet('away');nextPhase()},wait)}
-function controls(){const can=running&&!action; $('mouthBtn').disabled=!can||!(phase==='away'||(phase==='warning'&&mouth));$('wipeBtn').disabled=!can||!(phase==='away'||phase==='warning')||(!mouth&&crumbs===0);foodBtns.forEach((b,i)=>b.disabled=!can||phase!=='away'||!mouth||counts[i]>=3)}
-function face(){ $('mouthBtn').textContent=mouth?'🤐 闭嘴':'😮 张嘴';$('faceStatus').textContent=mouth?'嘴巴张开中：快选饭！':crumbs?'⚠️ 嘴边有食物痕迹，快擦！':'嘴边干净';$('crumbs').textContent=crumbs?'有痕迹':'干净';$('count').textContent='偷吃 '+bites+' / 9 口';counts.forEach((n,i)=>$('f'+i).textContent=n===3?'✅ 吃光了':'还剩 '+(3-n)+' 口');controls()}
-function openMouth(){if(!running||action)return;if(phase==='away'||(phase==='warning'&&mouth)){mouth=!mouth;face()}}
-function eat(i){if(!running||phase!=='away'||!mouth||counts[i]>=3||action)return;action=true;controls();$('faceStatus').textContent='嚼嚼嚼……';setTimeout(()=>{if(!running)return;counts[i]++;bites++;crumbs=Math.min(3,crumbs+1);mouth=false;action=false;face()},350)}
-function wipe(){if(!running||!(phase==='away'||phase==='warning')||action)return;action=true;$('faceStatus').textContent='刷刷刷！擦干净！';setTimeout(()=>{if(!running)return;crumbs=0;mouth=false;action=false;face();if(counts.every(n=>n===3))win()},300)}
-function stopLoop(){running=false;clearTimeout(timer);controls()}
-function finish(winFlag,msg){stopLoop();$('endIcon').textContent=winFlag?'🏆':'😱';$('endTitle').textContent=winFlag?'完美偷吃！':'被老师抓包了！';$('endText').textContent=msg;$('end').classList.remove('hidden')}
-function win(){finish(true,'九口饭全部吃完，嘴边也擦干净了！')}
-function lose(msg){if(!running)return;finish(false,msg+' 再试一次吧。')}
-async function start(){ $('start').disabled=true;$('err').textContent='正在请求摄像头权限…';try{if(!navigator.mediaDevices?.getUserMedia)throw Error('浏览器不支持摄像头。请使用 HTTPS 页面和最新版浏览器。');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});$('video').srcObject=stream;await $('video').play();$('cameraMsg').classList.add('hidden');$('intro').classList.add('hidden');$('faceStatus').textContent='真实摄像头已开启';counts=[0,0,0];crumbs=0;bites=0;mouth=false;running=true;phaseSet('away');nextPhase();face()}catch(e){$('err').textContent='摄像头启动失败：'+(e.message||'请检查浏览器权限后重试。')}finally{$('start').disabled=false}}
-function reset(){stopLoop();counts=[0,0,0];crumbs=0;bites=0;mouth=false;action=false;$('end').classList.add('hidden');if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('cameraMsg').classList.remove('hidden');$('intro').classList.remove('hidden');$('err').textContent='';$('teacherState').textContent='老师正在看你';$('speech').textContent='先点击开始，允许使用摄像头。';phase='idle';face()}
-$('start').addEventListener('click',start);$('mouthBtn').addEventListener('click',openMouth);$('wipeBtn').addEventListener('click',wipe);foodBtns.forEach((b,i)=>b.addEventListener('click',()=>eat(i)));$('restart').addEventListener('click',reset);$('again').addEventListener('click',reset);addEventListener('pagehide',()=>{if(stream)stream.getTracks().forEach(t=>t.stop())});face()
-})();
-</script></body></html>
+<div id="toast"><div class="toastTop" id="toastTop">ACTION LOG</div><div class="toastText" id="toastText">等待摄像头追踪</div></div>
+<div id="boot"><div class="bootInner"><div class="bootKicker">A REAL-TIME CAMERA STEALTH GAME</div><h1>老师<br><em>回头了。</em></h1><p id="bootText">你的脸就是控制器。轻微左右转头切换餐食；张嘴完成一口；快速左右摆头擦掉嘴边痕迹。别让老师在检查时发现你。</p><div class="bootRule"></div><div id="bootStatus">正在自动请求摄像头权限与加载面部追踪模型…</div><div class="bootPrivacy">摄像头画面仅在当前浏览器本地处理，不上传视频。</div></div></div>
+<div id="endCard"><div class="endInner"><div class="endKicker mono" id="endKicker">SESSION TERMINATED</div><div id="endTitle">被发现了。</div><div id="endText"></div><div id="restartNote">REFRESH PAGE TO PLAY AGAIN / 刷新页面重新开始</div></div></div>
+<div id="errorPanel"></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js';
+
+const $ = id => document.getElementById(id);
+const video = $('video');
+const state = {
+ stream:null, landmarker:null, cameraReady:false, trackerReady:false, gameReady:false,
+ phase:'boot', lane:1, counts:[0,0,0], bites:0, crumbs:0, mouthOpen:false,
+ smoothMouth:0, yaw:0, lastYaw:0, lastExtreme:0, lastExtremeAt:0, lastShakeAt:0,
+ lastMouthEvent:0, biteLock:false, startedAt:0, phaseAt:0, phaseTimer:null,
+ toastTimer:null, alive:true, lastDetect:0, facePresent:false, faceLostAt:0, calibrateUntil:0,
+ neutralMouth:0, mouthSamples:[], suspicion:0, lastFrame:0
+};
+const lanes = [...document.querySelectorAll('.dish')];
+const progress = $('progress');
+for (let i=0;i<9;i++){const tick=document.createElement('i');progress.appendChild(tick)}
+const ticks=[...progress.children];
+
+const showToast=(top,text,ms=1500)=>{
+ $('toastTop').textContent=top; $('toastText').textContent=text; $('toast').classList.add('showToast');
+ clearTimeout(state.toastTimer); state.toastTimer=setTimeout(()=>$('toast').classList.remove('showToast'),ms);
+};
+const setBoot=(status,detail)=>{ if(status) $('bootStatus').textContent=status; if(detail) $('bootText').textContent=detail; };
+const showError=msg=>{ $('errorPanel').textContent=msg; $('errorPanel').style.display='block'; };
+const hideError=()=>{ $('errorPanel').style.display='none'; };
+
+let renderer, scene, camera, teacher, teacherHead, teacherBody, teacherEyes=[], dishMeshes=[], dishRings=[], particles, particlePositions, halfW=5, aspect=1;
+const clock = new THREE.Clock();
+const mat=(color,roughness=.7,metalness=0,extra={})=>new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});
+function mesh(geometry,material,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);parent.add(m);return m;}
+function makeTeacher(){
+ const g=new THREE.Group(); scene.add(g); teacher=g;
+ const suit=mat(0x20232d,.56,.12), shirt=mat(0xd7d5c9,.38), skin=mat(0xb98269,.7), hair=mat(0x14151b,.66), tie=mat(0x7a2735,.42), eyeWhite=mat(0xe9e4d8,.3), iris=mat(0x211d22,.3), glasses=mat(0x101116,.35,.25), gold=mat(0xb18b58,.32,.65);
+ mesh(new THREE.CapsuleGeometry(.63,.96,5,12),suit,g,0,-.88,0);
+ mesh(new THREE.BoxGeometry(.55,.22,.16),shirt,g,0,-.28,.23);
+ mesh(new THREE.ConeGeometry(.15,.53,4),tie,g,0,-.64,.32).rotation.z=Math.PI;
+ mesh(new THREE.CylinderGeometry(.13,.16,.25,12),skin,g,0,-.08,.01);
+ teacherHead=new THREE.Group();g.add(teacherHead);teacherHead.position.set(0,.46,.05);
+ mesh(new THREE.SphereGeometry(.52,32,24),skin,teacherHead,0,0,.04).scale.set(.83,1.05,.78);
+ mesh(new THREE.SphereGeometry(.49,28,18,0,Math.PI*2,0,Math.PI*.5),hair,teacherHead,0,.16,-.005).scale.set(1.04,1.04,.9);
+ mesh(new THREE.SphereGeometry(.17,18,14),hair,teacherHead,-.39,.03,.2).scale.set(.48,1.35,.58);
+ mesh(new THREE.SphereGeometry(.17,18,14),hair,teacherHead,.39,.03,.2).scale.set(.48,1.35,.58);
+ const fringe=mesh(new THREE.SphereGeometry(.33,20,15),hair,teacherHead,.02,.31,.35);fringe.scale.set(1.2,.43,.55);fringe.rotation.z=-.16;
+ for(const s of [-1,1]){
+  const x=s*.155;
+  mesh(new THREE.SphereGeometry(.075,16,12),eyeWhite,teacherHead,x,.035,.43).scale.set(1,.73,.5);
+  const pupil=mesh(new THREE.SphereGeometry(.036,12,10),iris,teacherHead,x,.03,.465);teacherEyes.push(pupil);
+  const rim=mesh(new THREE.TorusGeometry(.12,.018,8,24),glasses,teacherHead,x,.04,.462);rim.scale.set(1.15,.78,1);
+ }
+ mesh(new THREE.BoxGeometry(.09,.022,.022),glasses,teacherHead,0,.045,.48);
+ const brows=mat(0x272027,.62);
+ for(const s of [-1,1]){const b=mesh(new THREE.BoxGeometry(.23,.045,.06),brows,teacherHead,s*.16,.19,.43);b.rotation.z=s*.1;}
+ const nose=mesh(new THREE.ConeGeometry(.075,.15,12),skin,teacherHead,0,-.055,.49);nose.rotation.x=Math.PI/2;
+ mesh(new THREE.BoxGeometry(.13,.025,.02),mat(0x522e34,.8),teacherHead,0,-.19,.45);
+ mesh(new THREE.CircleGeometry(.07,20),gold,g,-.34,-.86,.54);
+ g.scale.setScalar(.88);g.position.set(halfW*.62,2.15,0);return g;
+}
+function makeDish(index){
+ const group=new THREE.Group();scene.add(group);
+ const ceramic=mat([0xd7d4c9,0x4d5d6c,0xaaa078][index],.28,.08);
+ const rim=mat([0xf2e8d4,0x9cc1c4,0xd5c09a][index],.24,.22);
+ const fill=mat([0xe5d4a9,0xd4b58a,0xe9d5aa][index],.65);
+ mesh(new THREE.CylinderGeometry(.65,.54,.13,48),ceramic,group,0,-.1,0);
+ mesh(new THREE.TorusGeometry(.56,.045,12,48),rim,group,0,-.025,0);
+ if(index===0){
+  const mound=mesh(new THREE.SphereGeometry(.43,28,20),fill,group,0,.12,.03);mound.scale.set(1.05,.48,.83);
+  for(let i=0;i<24;i++){const a=Math.random()*Math.PI*2,r=.12+Math.random()*.29;mesh(new THREE.SphereGeometry(.018+Math.random()*.014,6,5),mat(0xf6ebd2,.8),group,Math.cos(a)*r,.28+Math.random()*.08,Math.sin(a)*r);}
+ }else if(index===1){
+  mesh(new THREE.CylinderGeometry(.48,.42,.08,40),mat(0x5a4032,.5),group,0,.01,0);
+  for(let k=0;k<7;k++){const curve=new THREE.CatmullRomCurve3(Array.from({length:48},(_,j)=>{const t=j/47*Math.PI*5+k*.42;const r=.17+(k%3)*.07;return new THREE.Vector3(Math.cos(t)*r,.10+Math.sin(t*1.7)*.025,Math.sin(t)*r)}));mesh(new THREE.TubeGeometry(curve,100,.022,6,false),fill,group,0,.02,0);}
+  for(let i=0;i<3;i++){const egg=mesh(new THREE.SphereGeometry(.105,16,10),mat(i===0?0x88a46f:0xdfd0a7,.65),group,-.18+i*.17,.14,.1);egg.scale.set(1,.6,.7);}
+ }else{
+  for(const [x,z,rot] of [[-.16,-.08,-.15],[.17,.1,.22]]){const rice=mesh(new THREE.SphereGeometry(.28,26,18),fill,group,x,.14,z);rice.scale.set(.85,.78,.56);rice.rotation.z=rot;const nori=mesh(new THREE.BoxGeometry(.35,.25,.035),mat(0x26352f,.7),group,x,.06,z+.27);nori.rotation.z=rot;}
+  mesh(new THREE.TorusGeometry(.52,.025,6,32),rim,group,0,.03,0);
+ }
+ const ring=mesh(new THREE.TorusGeometry(.83,.013,6,64),mat(0xd7f58b,.3,.35,{transparent:true,opacity:.1}),group,0,-.03,-.05);
+ group.position.set((index-1)*halfW*.48,-3.18,.2);group.scale.setScalar(Math.min(1,halfW/4.8)*.86);
+ dishMeshes.push(group);dishRings.push(ring);
+}
+function initWorld(){
+ scene=new THREE.Scene();scene.background=null;
+ camera=new THREE.OrthographicCamera(-halfW,halfW,5,-5,.1,100);camera.position.set(0,0,30);camera.lookAt(0,0,0);
+ renderer=new THREE.WebGLRenderer({canvas:$('world'),alpha:true,antialias:true,powerPreference:'high-performance'});
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight,false);renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
+ scene.add(new THREE.AmbientLight(0x9ca8c2,1.7));
+ const key=new THREE.DirectionalLight(0xffd5a4,3.2);key.position.set(-4,7,9);scene.add(key);
+ const cool=new THREE.PointLight(0x9da9ff,35,18);cool.position.set(halfW*.55,2.4,5);scene.add(cool);
+ const rimLight=new THREE.PointLight(0xd7f58b,22,15);rimLight.position.set(-halfW*.55,-2.3,4);scene.add(rimLight);
+ makeTeacher();for(let i=0;i<3;i++)makeDish(i);
+ const deskMat=mat(0x24242b,.32,.28,{transparent:true,opacity:.42});
+ const desk=mesh(new THREE.BoxGeometry(1,.1,.6),deskMat,scene,0,-4.23,-.6);desk.scale.x=halfW*2.1;desk.rotation.z=.015;
+ const edge=mesh(new THREE.BoxGeometry(1,.018,.03),mat(0xc3b78f,.25,.35,{transparent:true,opacity:.5}),scene,0,-4.17,-.25);edge.scale.x=halfW*2.1;
+ const count=100;particlePositions=new Float32Array(count*3);for(let i=0;i<count;i++){particlePositions[i*3]=(Math.random()*2-1)*halfW;particlePositions[i*3+1]=(Math.random()*2-1)*4.7;particlePositions[i*3+2]=-1+Math.random()*1.8;}
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));particles=new THREE.Points(geo,new THREE.PointsMaterial({color:0xe5ddc4,size:.023,transparent:true,opacity:.4,depthWrite:false}));scene.add(particles);
+ resizeWorld();renderWorld();
+}
+function resizeWorld(){
+ if(!renderer||!camera)return;aspect=innerWidth/Math.max(1,innerHeight);halfW=5*aspect;camera.left=-halfW;camera.right=halfW;camera.top=5;camera.bottom=-5;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));
+ if(teacher){teacher.position.set(halfW*.63,2.14,0);teacher.scale.setScalar(Math.min(1,halfW/4.8)*.9)}
+ dishMeshes.forEach((g,i)=>{g.position.x=(i-1)*halfW*.48;g.scale.setScalar(Math.min(1,halfW/4.8)*.86)});
+ const desk=scene.children.find(o=>o.geometry?.type==='BoxGeometry'&&o.position.y===-4.23);if(desk)desk.scale.x=halfW*2.1;const edge=scene.children.find(o=>o.geometry?.type==='BoxGeometry'&&o.position.y===-4.17);if(edge)edge.scale.x=halfW*2.1;
+ if(particles){const p=particles.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setX(i,(Math.random()*2-1)*halfW);p.needsUpdate=true;}
+}
+function renderWorld(){
+ if(!state.alive)return;requestAnimationFrame(renderWorld);const dt=clock.getDelta();const t=clock.elapsedTime;
+ if(teacher){const target=state.phase==='away'?Math.PI*.88:state.phase==='turning'?Math.PI*.45:state.phase==='warning'?Math.PI*.14:0;teacher.rotation.y=THREE.MathUtils.damp(teacher.rotation.y,target,2.7,Math.min(.05,dt||.016));teacher.position.y=2.12+Math.sin(t*1.05)*.035;teacherHead.rotation.z=Math.sin(t*1.5)*.025+(state.phase==='away'?-.04:0);teacherHead.rotation.x=state.phase==='watching'?Math.sin(t*2)*.018:0;}
+ dishMeshes.forEach((g,i)=>{const selected=state.lane===i;g.position.y=-3.17+Math.sin(t*1.6+i)*.035+(selected?.045:0);g.rotation.y=Math.sin(t*.4+i)*.08;g.rotation.z=Math.sin(t*.8+i)*.012;const s=Math.min(1,halfW/4.8)*.86*(selected?1.07:1);g.scale.setScalar(s);dishRings[i].material.opacity=selected?.8:.13;dishRings[i].rotation.z=t*.15*(i%2?1:-1);});
+ if(particles){particles.rotation.y=Math.sin(t*.1)*.07;particles.position.y=Math.sin(t*.18)*.12;}
+ renderer.render(scene,camera);
+}
+function setLane(lane){lane=Math.max(0,Math.min(2,lane));if(state.lane===lane)return;state.lane=lane;lanes.forEach((el,i)=>{el.classList.toggle('selected',i===lane);el.classList.toggle('done',state.counts[i]>=3)});}
+function updateHud(){
+ $('bites').innerHTML=String(state.bites).padStart(2,'0')+'<small>/ 09 BITES</small>';
+ ticks.forEach((el,i)=>el.classList.toggle('done',i<state.bites));
+ state.counts.forEach((n,i)=>{$('dishMeta'+i).textContent=(n>=3?'COMPLETE':String(n)+' / 3 BITES');lanes[i].classList.toggle('done',n>=3)});
+ lanes.forEach((el,i)=>el.classList.toggle('selected',i===state.lane));
+ $('phaseLabel').textContent=({boot:'LINKING CAMERA',watching:'TEACHER / WATCHING',turning:'TEACHER / TURNING',away:'WINDOW OPEN',warning:'TEACHER / SUSPICIOUS',won:'SESSION COMPLETE',lost:'SESSION TERMINATED'})[state.phase]||'FACIAL TRACKING';
+ $('stateDot').style.background=state.phase==='watching'||state.phase==='lost'?'var(--red)':state.phase==='warning'?'var(--gold)':'var(--acid)';
+ $('teacherSub').textContent=state.facePresent?'FACIAL TRACKING · LOCKED':'FACIAL TRACKING · SEARCHING';
+ $('gestureMain').textContent=state.facePresent?(state.mouthOpen?'MOUTH OPEN / BITE SIGNAL':state.crumbs?'TRACE DETECTED / SHAKE TO WIPE':'HEAD POSE / ACTIVE'):'FACE TRACKING / SEARCH';
+ $('gestureSub').textContent=state.crumbs?'快速左右摆头，擦掉嘴边痕迹':state.phase==='away'?'转头选餐，张嘴吃一口':'轻微左右转头选餐 · 张嘴进食 · 快速左右摆头擦嘴';
+}
+function setPhase(next){
+ if(['lost','won'].includes(state.phase))return;
+ state.phase=next;state.phaseAt=performance.now();updateHud();
+ const show=next==='away'||next==='warning';$('phaseTitle').style.opacity=show?'1':'0';
+ if(next==='away'){$('phaseEyebrow').textContent='WINDOW OF OPPORTUNITY';$('phaseBig').textContent='老师转过身了';$('phaseDetail').textContent='现在行动。用头部选择餐食，张嘴完成进食。';$('phaseBig').style.color='var(--acid)';}
+ if(next==='warning'){$('phaseEyebrow').textContent='MOTION DETECTED';$('phaseBig').textContent='老师好像听见了';$('phaseDetail').textContent=state.crumbs?'收住动作，快速左右摆头擦掉痕迹。':'闭上嘴，别再动。';$('phaseBig').style.color='var(--gold)';showToast('WARNING / 预警','老师正在转回来',1300);}
+ if(next==='watching'){$('phaseEyebrow').textContent='INSPECTION';$('phaseBig').textContent='保持自然';$('phaseDetail').textContent='嘴要闭上，脸上不能留有食物痕迹。';$('phaseBig').style.color='var(--red)';}
+ if(next==='turning'){$('phaseEyebrow').textContent='TURNING AWAY';$('phaseBig').textContent='等一个空档';$('phaseDetail').textContent='不要提前张嘴。';$('phaseBig').style.color='var(--gold)';}
+ if(next==='away')showToast('WINDOW OPEN / 时机出现','老师背过身了',1100);
+ if(next==='watching'&&(state.crumbs>0||state.mouthOpen)){finish(false,state.crumbs>0?'老师看见了嘴边的食物痕迹。':'老师看见你还张着嘴。');return;}
+ schedulePhase();
+}
+function schedulePhase(){clearTimeout(state.phaseTimer);let delay=0;
+ if(state.phase==='watching')delay=3200+Math.random()*1200;
+ else if(state.phase==='turning')delay=850+Math.random()*350;
+ else if(state.phase==='away')delay=3900+Math.random()*1700;
+ else if(state.phase==='warning')delay=1450+Math.random()*850;
+ else return;
+ state.phaseTimer=setTimeout(()=>{
+  if(!state.gameReady)return;
+  const n={watching:'turning',turning:'away',away:'warning',warning:'watching'}[state.phase];setPhase(n);
+ },delay);
+}
+function finish(won,reason){
+ state.phase=won?'won':'lost';state.gameReady=false;clearTimeout(state.phaseTimer);updateHud();
+ $('phaseTitle').style.opacity='0';$('endCard').classList.add('visible');
+ $('endKicker').textContent=won?'PERFECT LUNCH / CLEARED':'DETECTED / SESSION FAILED';$('endKicker').style.color=won?'var(--acid)':'var(--red)';
+ $('endTitle').textContent=won?'干净利落。':'被发现了。';$('endTitle').style.color=won?'var(--acid)':'var(--red)';
+ $('endText').textContent=won?'九口午餐全部完成，嘴边痕迹已清除。你的动作足够克制。':String(reason)+' 本局完成 '+state.bites+'/9 口。';
+ $('gestureMain').textContent='SESSION ENDED';$('gestureSub').textContent='刷新页面重新开始';
+ showToast(won?'MISSION COMPLETE':'MISSION FAILED',won?'所有痕迹均已清除':reason,2500);
+}
+function bite(){
+ if(!state.gameReady||state.biteLock)return;
+ const now=performance.now();if(now-state.lastMouthEvent<500)return;state.lastMouthEvent=now;
+ if(state.phase==='watching'){finish(false,'老师发现你张嘴了。');return;}
+ if(state.phase==='turning'){showToast('TOO EARLY / 过早行动','等老师完全转过去',950);return;}
+ if(state.phase==='warning'){state.suspicion++;showToast('SUSPICION / 暴露风险','老师听到了动静',900);return;}
+ if(state.phase!=='away')return;
+ if(state.counts[state.lane]>=3){showToast('PLATE EMPTY / 已吃完','这份餐食已经空了',850);return;}
+ state.biteLock=true;state.counts[state.lane]++;state.bites++;state.crumbs=Math.min(3,state.crumbs+1);updateHud();
+ showToast('BITE '+String(state.bites).padStart(2,'0')+' / 09',['米饭入口。','汤面入口。','饭团入口。'][state.lane],850);
+ if(dishMeshes[state.lane]){dishMeshes[state.lane].userData.pulse=performance.now();}
+ document.documentElement.animate([{filter:'brightness(1)'},{filter:'brightness(1.28)'},{filter:'brightness(1)'}],{duration:270,easing:'ease-out'});
+ setTimeout(()=>{state.biteLock=false;updateHud();if(state.bites>=9&&state.crumbs===0)finish(true,'');},480);
+}
+function wipeTrace(){
+ if(!state.gameReady||state.crumbs===0)return;
+ if(state.phase==='watching'){finish(false,'你试图擦嘴时被老师看见了。');return;}
+ if(state.phase==='turning'){showToast('WAIT / 等待时机','老师还没有完全转身',800);return;}
+ if(state.phase==='warning'&&state.mouthOpen){showToast('CLOSE MOUTH / 收住动作','先闭嘴再擦除痕迹',850);return;}
+ if(state.phase!=='away'&&state.phase!=='warning')return;
+ state.crumbs=0;updateHud();showToast('TRACE CLEARED / 痕迹清除','嘴边干净了',1100);
+ if(state.bites>=9)finish(true,'');
+}
+function updatePose(landmarks,blendshapes,now){
+ const p=i=>landmarks[i];
+ const faceL=p(234),faceR=p(454),nose=p(1);const faceWidth=Math.max(.06,Math.abs(faceR.x-faceL.x));
+ const faceCenter=(faceL.x+faceR.x)*.5;
+ let yaw=THREE.MathUtils.clamp((nose.x-faceCenter)/faceWidth*-5.2,-1,1);
+ state.yaw=state.yaw*.72+yaw*.28;
+ let ratio=0;try{ratio=Math.abs(p(13).y-p(14).y)/Math.max(.02,Math.abs(p(78).x-p(308).x));}catch(e){}
+ let jaw=0;if(blendshapes?.categories){const cat=blendshapes.categories.find(c=>c.categoryName==='jawOpen');if(cat)jaw=cat.score;}
+ const rawMouth=jaw>.0?Math.max(jaw,ratio*2.5):ratio*2.5;
+ state.smoothMouth=state.smoothMouth*.63+rawMouth*.37;
+ const open=state.smoothMouth>(jaw>.0?.31:.20);
+ const wasOpen=state.mouthOpen;state.mouthOpen=open;
+ let lane=1;if(state.yaw<-.14)lane=0;else if(state.yaw>.14)lane=2;setLane(lane);
+ const side=state.yaw<-.24?-1:state.yaw>.24?1:0;
+ if(side&&side!==state.lastExtreme){
+  if(state.lastExtreme&&side===-state.lastExtreme&&now-state.lastExtremeAt<780&&now-state.lastShakeAt>900){state.lastShakeAt=now;wipeTrace();}
+  state.lastExtreme=side;state.lastExtremeAt=now;
+ }
+ if(open&&!wasOpen)bite();
+ if(!open&&wasOpen&&state.phase==='warning')state.suspicion=Math.max(0,state.suspicion-1);
+ if(state.phase==='watching'&&open){if(now-state.phaseAt>130)finish(false,'老师发现你张嘴了。');}
+ updateHud();
+}
+async function initCamera(){
+ if(!navigator.mediaDevices?.getUserMedia)throw new Error('当前页面无法访问摄像头。请从 HTTPS 的 GitHub Pages 页面打开，并允许浏览器使用摄像头。');
+ state.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
+ video.srcObject=state.stream;await video.play();state.cameraReady=true;hideError();
+}
+async function initTracker(){
+ setBoot('正在加载面部追踪模型…','镜头中的头部姿态与嘴部动作将实时转换为游戏输入；所有影像处理均在此浏览器内完成。');
+ const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm');
+ const files=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+ const url='https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+ try{state.landmarker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:url,delegate:'GPU'},runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:true,minFaceDetectionConfidence:.55,minFacePresenceConfidence:.5,minTrackingConfidence:.5});}
+ catch(gpuError){state.landmarker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:url,delegate:'CPU'},runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:true,minFaceDetectionConfidence:.55,minFacePresenceConfidence:.5,minTrackingConfidence:.5});}
+ state.trackerReady=true;
+}
+function startDetection(){
+ const loop=now=>{
+  if(!state.alive)return;requestAnimationFrame(loop);
+  if(!state.landmarker||video.readyState<2||now-state.lastDetect<30)return;
+  state.lastDetect=now;
+  try{
+   const result=state.landmarker.detectForVideo(video,now);const face=result.faceLandmarks?.[0];
+   if(face){state.facePresent=true;state.faceLostAt=0;updatePose(face,result.faceBlendshapes?.[0],now);}
+   else{state.facePresent=false;if(!state.faceLostAt)state.faceLostAt=now;if(state.gameReady&&now-state.faceLostAt>2300)finish(false,'摄像头无法持续识别到你的脸。请保持脸部处于画面中。');updateHud();}
+  }catch(e){}
+ };requestAnimationFrame(loop);
+}
+async function boot(){
+ try{initWorld();window.addEventListener('resize',resizeWorld,{passive:true});}
+ catch(e){showError('3D 渲染层初始化失败：'+(e.message||e));}
+ const cameraTask=initCamera().catch(e=>{showError('摄像头未能启动：'+(e.message||e)+' 请在浏览器站点设置中允许摄像头，然后刷新页面。');setBoot('CAMERA PERMISSION REQUIRED','当前页面不会提供按钮或键盘替代操作。请允许摄像头权限后刷新页面。');throw e;});
+ const trackerTask=initTracker().catch(e=>{showError('面部追踪模型加载失败：请检查网络连接后刷新页面。模型来自 MediaPipe CDN 与 Google 模型托管。');setBoot('FACIAL TRACKER UNAVAILABLE','本游戏需要加载实时面部关键点模型；未加载成功时不会退化为按钮控制。请检查网络后刷新页面。');throw e;});
+ const results=await Promise.allSettled([cameraTask,trackerTask]);
+ if(results.some(r=>r.status==='rejected'))return;
+ state.gameReady=true;state.startedAt=performance.now();state.calibrateUntil=state.startedAt+1600;state.phase='watching';state.phaseAt=performance.now();
+ setBoot('CAMERA LINKED / FACE TRACKING ACTIVE','头部轻微左转选米饭，正对镜头选汤面，右转选饭团。张嘴进食；快速左右摆头擦嘴。');
+ $('boot').style.opacity='0';setTimeout(()=>$('boot').style.display='none',1000);
+ startDetection();updateHud();schedulePhase();showToast('SYSTEM ONLINE / 系统就绪','你的脸就是控制器',1700);
+}
+window.addEventListener('pagehide',()=>{state.alive=false;clearTimeout(state.phaseTimer);if(state.stream)state.stream.getTracks().forEach(t=>t.stop());if(state.landmarker)state.landmarker.close();if(renderer)renderer.dispose();});
+boot();
+</script>
+</body>
+</html>

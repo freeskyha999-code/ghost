@@ -32,7 +32,7 @@ const STORY={
      {if:"f.coins>=5",then:[{choice:[{text:"付五锭银子。",run:[{add:"coins",n:-5},{set:"cuiFree",value:true},{say:"红姨",text:"……拿去。契是你的了。出了这个门，她的事与我无关。"},{run:"endFree"}]},{text:"再想想。",run:[]}]}],else:[{say:"红姨",text:"你身上没有这么多。先把村长的活干完。"}]}]},
     {text:"我想见见阿翠。",run:[{say:"红姨",text:"在后屋。别误了她的时辰。"}]},{text:"（离开）",run:[]}]}],
   cuiTalk:[{if:"f.cuiFree",then:[{say:"阿翠",text:"我不用再数日子了……可村里没人肯雇我，门口的人见了我还是吐口水。我能去哪呢？"},{tell:"赎了身，也赎不掉别人嘴里的那个字。"}],
-   else:[{say:"阿翠",text:"客官要听曲，还是要……？"},{choice:[{text:"我不是来买你的。聊聊。",run:[{say:"阿翠",text:"我十六岁被叔叔押在这儿抵债，契上写十年，今年第三年。"},{say:"阿翠",text:"村里人路过我，吐一口唰沫，夜里又有人敲后门。他们骂我贱，可这个「贱」的价钱，是他们定的。"},{set:"cuiMet",value:true},{quest:"阿翠的契在红姨手里（五锭银子）"}]},{text:"（离开）",run:[]}]}]}],
+   else:[{say:"阿翠",text:"客官要听曲，还是要……？"},{choice:[{text:"我不是来买你的。聊聊。",run:[{say:"阿翠",text:"我十六岁被叔叔押在这儿抵债，契上写十年，今年第三年。"},{say:"阿翠",text:"村里人路过我，吐口水，夜里又有人敲后门。他们骂我贱，可这个「贱」的价钱，是他们定的。"},{set:"cuiMet",value:true},{quest:"阿翠的契在红姨手里（五锭银子）"}]},{text:"（离开）",run:[]}]}]}],
   endFree:[{title:"契烧了",sub:"楼还在，风俗还在。她只是不再欠着。",dur:4},{quest:""}],
   siteHint:[{tell:"这里是倒塌的集会所旧址。"}],
   buildHall:[{set:"hallDone",value:true},{quest:""},{cut:true},{say:"旁白",text:"原木落地的闷响在村子里回荡……石匠们赶来了。"},

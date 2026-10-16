@@ -1,0 +1,46 @@
+"use strict";
+/* ============ 10. 剧情数据（只改这里就能换故事） ============ */
+const STORY={
+ npcs:[{id:"elder",name:"老村长",skin:"皮肤4_胡须男",at:[64.5,60.5],color:0x7a3b8f},{id:"ranger",name:"旅人阿燃",skin:"皮肤3_黑衣银发",at:[76.5,66.5],color:0x2f7d6b},{id:"madam",name:"红姨",g:"f",skin:"皮肤2_红眼马尾",at:[71.5,47.5],y:10,color:0xa8323e},{id:"cui",name:"阿翠",g:"f",skin:"皮肤1_白裙少女",at:[69.5,46.5],y:10,color:0xd6a15c},{id:"wang",name:"王二",skin:"steve",at:[68.5,54.5],color:0x6b6b3a}],
+ triggers:[
+  {id:"boot",on:"start",once:true,run:"intro"},
+  {id:"elder",on:"talk:elder",run:"elderTalk"},
+  {id:"ranger",on:"talk:ranger",run:"rangerTalk"},{id:"madam",on:"talk:madam",run:"madamTalk"},{id:"cui",on:"talk:cui",run:"cuiTalk"},{id:"wang",on:"talk:wang",run:"wangTalk"},
+  {id:"log",on:"break:log",run:"logBroken"},
+  {id:"build",when:"f.logs>=3&&!f.hallDone",run:"buildHall"},
+  {id:"site",region:[52,9,70,64,14,80],when:"f.accepted&&!f.hallDone",run:"siteHint"}],
+ scripts:{
+  intro:[{time:"day"},{cut:true},{cam:{pos:[64,24,84],look:[64,10,60]}},{title:"青石村",sub:"第一章 · 归来",dur:3.5},{wait:.5},{cam:null},{cut:false},
+   {say:"旁白",text:"你回到了这座离开多年的村子。远处，一位老人正望着你。"},{quest:"去找老村长谈谈"}],
+  elderTalk:[{if:"f.hallDone",then:[{say:"老村长",text:"集会所重新立起来了，青石村又有了灯火。多亏了你。"},{if:"f.cuiMet&&!f.cuiFree",then:[{say:"老村长",text:"村里的事算了了。那楼里的事是风俗，你别管。"},{title:"集会所立起来了",sub:"可是，有人还欠着一张契。",dur:4}]}],else:[
+   {if:"!f.accepted",then:[{say:"老村长",text:"你终于来了……村里的集会所塌了，我们缺木头。"},
+    {choice:[{text:"我来帮忙。",run:[{set:"accepted",value:true},{set:"logs",value:0},{say:"老村长",text:"好孩子。去村边的橡树砍三块原木回来。"},{quest:"砍倒橡树，收集原木 ({logs}/3)"}]},
+     {text:"我再想想。",run:[{say:"老村长",text:"唉……村子等不了太久。"}]}]}],
+    else:[{say:"老村长",text:"还差一些木头，别停下。"},{tell:"进度：{logs}/3"}]}]}],
+  rangerTalk:[{say:"旅人阿燃",text:"这村子比我上次路过时安静多了。"},
+   {choice:[{text:"你知道集会所怎么塌的吗？",run:[{say:"旅人阿燃",text:"夜里有人听见地下传来声响……别问我，我只是路过。"},{set:"rumor",value:true}]},
+    {text:"你为什么在这里？",run:[{say:"旅人阿燃",text:"我在找一个传说里的矿洞。听说入口就在这座村子下面。"}]},
+    {text:"新集会所怎么样？",if:"f.hallDone",run:[{say:"旅人阿燃",text:"砖砌得不错。今晚我就睡在里面了。"},{if:"f.rumor",then:[{say:"旅人阿燃",text:"……希望地下的声音，今晚别再响。"}]}]},
+    {text:"（离开）",run:[]}]}],
+  logBroken:[{if:"f.accepted&&!f.hallDone",then:[{add:"logs"},{quest:"砍倒橡树，收集原木 ({logs}/3)"}]}],
+  wangTalk:[{say:"王二",text:"别往那楼里矅。红袖楼，窑子。里头全是贱女人——可这是咱村的老规矩，光棍汉有个去处。"},
+   {choice:[{text:"这规矩谁定的？",run:[{say:"王二",text:"祖上传的。村长也睁只眼闭只眼，年年收红姨一份「灯油钱」。"},{set:"knowsFee",value:true}]},
+    {text:"她们也是人。",run:[{say:"王二",text:"人？卖身契上写着价钱呢。你要心疼，掏银子去。"}]},{text:"（走开）",run:[]}]}],
+  madamTalk:[{say:"红姨",text:"客官面生。红袖楼的规矩：姑娘们签了契，吃我的住我的，欠着我的。"},
+   {if:"f.knowsFee",then:[{say:"红姨",text:"村长收灯油钱，我养一楼的人。这门生意，村里谁都不干净，别拿那种眼神看我。"}]},
+   {choice:[{text:"赎阿翠的身要多少？",if:"f.cuiMet&&!f.cuiFree",run:[{say:"红姨",text:"五锭银子，契当面烧。少一个子儿，免谈。"},
+     {if:"f.coins>=5",then:[{choice:[{text:"付五锭银子。",run:[{add:"coins",n:-5},{set:"cuiFree",value:true},{say:"红姨",text:"……拿去。契是你的了。出了这个门，她的事与我无关。"},{run:"endFree"}]},{text:"再想想。",run:[]}]}],else:[{say:"红姨",text:"你兖里没有这么多。先把村长的活干完。"}]}]},
+    {text:"我想见见阿翠。",run:[{say:"红姨",text:"在后屋。别误她的时辰。"}]},{text:"（离开）",run:[]}]}],
+  cuiTalk:[{if:"f.cuiFree",then:[{say:"阿翠",text:"我不用再数日子了……可村里没人肯雇我，门口的人见了我还是啰。我能去哪呢？"},{tell:"赎了身，也赎不掉别人嘴里的那个字。"}],
+   else:[{say:"阿翠",text:"客官要听曲，还是要……？"},{choice:[{text:"我不是来买你的。聊聊。",run:[{say:"阿翠",text:"我十六岁被叔叔押在这儿抵债，契上写十年，今年第三年。"},{say:"阿翠",text:"村里人路过我，啰一口，夜里又有人敲后门。他们骂我贱，可这个「贱」的价钱，是他们定的。"},{set:"cuiMet",value:true},{quest:"阿翠的契在红姨手里（五锭银子）"}]},{text:"（离开）",run:[]}]}]}],
+  endFree:[{title:"契烧了",sub:"楼还在，风俗还在。她只是不再欠着。",dur:4},{quest:""}],
+  siteHint:[{tell:"这里是倒塌的集会所旧址。"}],
+  buildHall:[{set:"hallDone",value:true},{quest:""},{cut:true},{say:"旁白",text:"原木落地的闷响在村子里回荡……石匠们赶来了。"},
+   {cam:{pos:[50,22,88],look:[58,11,75]}},{wait:1.5},
+   {fill:[54,9,72,62,9,78,"planks"],delay:6},{fill:[54,10,72,62,13,72,"brick"],delay:6},{fill:[54,10,78,62,13,78,"brick"],delay:6},
+   {fill:[54,10,73,54,13,77,"brick"],delay:6},{fill:[62,10,73,62,13,77,"brick"],delay:6},
+   {fill:[58,10,72,58,11,72,"air"]},{setblock:[54,11,75,"glass"]},{setblock:[62,11,75,"glass"]},
+   {fill:[54,14,72,62,14,78,"planks"],delay:6},{setblock:[58,13,75,"lantern"]},{setblock:[56,13,75,"lantern"]},{setblock:[60,13,75,"lantern"]},
+   {title:"集会所重建",sub:"进度达成",dur:3},{cam:null},{cut:false},
+   {add:"coins",n:5},{tell:"酬谢：银子 {coins} 锭"},{say:"老村长",text:"……立起来了。去和阿燃聊聊吧，他一直想问你点事。"},{walk:"ranger",to:[58.5,70.5],speed:2.5},{quest:"与旅人阿燃交谈"}]}
+};

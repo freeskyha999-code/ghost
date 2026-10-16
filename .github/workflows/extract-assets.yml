@@ -1,0 +1,41 @@
+name: 提取素材
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 下载素材包
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v1 -R freeskyha999-code/packs -p 'minecraft-assets-*.zip' -O pack.zip
+      - name: 解压
+        run: |
+          mkdir -p tmp
+          unzip -q pack.zip "*/assets/minecraft/textures/block/*" "*/assets/minecraft/textures/environment/*" "*/assets/minecraft/textures/entity/player/*" "*/assets/minecraft/sounds/dig/*" "*/assets/minecraft/sounds/step/*" "*/assets/minecraft/sounds/music/game/*" -d tmp
+      - name: 整理并压缩音乐
+        run: |
+          set -e
+          R=$(echo tmp/*/assets/minecraft)
+          A=games/blockstory/assets
+          rm -rf $A
+          mkdir -p $A/tex $A/env $A/skins $A/snd $A/music
+          cp $R/textures/block/*.png $A/tex/
+          cp -r $R/textures/environment/* $A/env/
+          cp -r $R/textures/entity/player/* $A/skins/
+          cp -r $R/sounds/dig $A/snd/dig
+          cp -r $R/sounds/step $A/snd/step
+          for k in dry_hands key oxygene wet_hands living_mice sweden minecraft subwoofer_lullaby haggstrom clark floating_dream a_familiar_room mice_on_venus below_and_above; do
+            ffmpeg -v error -y -i "$R/sounds/music/game/$k.ogg" -vn -ac 2 -ar 32000 -c:a libvorbis -b:a 36k "$A/music/$k.ogg"
+          done
+          (cd games/blockstory && find assets -type f | sort | jq -R . | jq -s . > manifest.json)
+      - name: 提交
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add games/blockstory
+          git commit -m "Extract minecraft assets" || echo "no changes"
+          git push

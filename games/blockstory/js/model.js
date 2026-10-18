@@ -6,7 +6,7 @@ function boxUV(g,w,h,d,u,v){const f=[[u+d+w,v+d,d,h],[u,v+d,d,h],[u+d,v,w,d],[u+
 function part(mat,w,h,d,u,v,inf,x,y){const g=new THREE.BoxGeometry((w+inf)*PX,(h+inf)*PX,(d+inf)*PX);boxUV(g,w,h,d,u,v);const m=new THREE.Mesh(g,mat);m.castShadow=true;m.position.set(x*PX,y*PX,0);return m}
 function mkPlayer(mat,slim){const G=new THREE.Group(),aw=slim?3:4,L={},O=[],ov=(P,w,h,d,u,v,t,x,y)=>{const g=new THREE.Group();g.position.set(x*PX,y*PX,0);P.add(g);O.push({g,w,h,d,u,v,t})};
  const limb=(n,w,u,v,u2,v2,px,py,cy)=>{const j=new THREE.Group();j.position.set(px*PX,py*PX,0);j.add(part(mat,w,12,4,u,v,0,0,cy));ov(j,w,12,4,u2,v2,.5,0,cy);G.add(j);L[n]=j};
- G.add(part(mat,8,8,8,0,0,0,0,28),part(mat,8,12,4,16,16,0,0,18));ov(G,8,8,8,32,0,1,0,28);ov(G,8,12,4,16,32,.5,0,18);
+ const Hd=new THREE.Group();Hd.position.set(0,24*PX,0);Hd.add(part(mat,8,8,8,0,0,0,0,4));ov(Hd,8,8,8,32,0,1,0,4);G.add(Hd,part(mat,8,12,4,16,16,0,0,18));ov(G,8,12,4,16,32,.5,0,18);L.head=Hd;
  limb("ra",aw,40,16,40,32,-(4+aw/2),22,-4);limb("la",aw,32,48,48,48,4+aw/2,22,-4);limb("rl",4,0,16,0,32,-2,12,-6);limb("ll",4,16,48,0,48,2,12,-6);
  G.userData.L=L;G.userData.O=O;return G}
 function mirrorOld(x){const fl=(sx,sy,w,h,dx,dy)=>{x.save();x.translate(dx+w,dy);x.scale(-1,1);x.drawImage(x.canvas,sx,sy,w,h,0,0,w,h);x.restore()};

@@ -1,5 +1,6 @@
 "use strict";
 /* ============ 启动 ============ */
+{const _a=SM.apply;SM.apply=function(o,q){SV.reset();return _a.call(this,o,q)}}
 W.init();W.generate();LT.calc();LT.t=0;LT.cs.clear();STORY.npcs.forEach(n=>NPC.add(n));UI.hotbar();loadPack();
 window.MC={TD,LS,FX,BL,COMP,Atlas,B,ID,W,P,S,STORY,NPC,UI,ACT}; /* 控制台可用：MC.Atlas.set("stone","url") */
 requestAnimationFrame(frame);

@@ -51,7 +51,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:var(--ink);
 <canvas id="c"></canvas>
 <div class="hud" id="cross"></div><div class="hud" id="quest"></div><div class="hud" id="toast"></div>
 <div class="hud" id="title"><h1></h1><p></p></div><div class="hud" id="prompt"></div>
-<div class="hud" id="help">WASD 移动 · 空格 跳 · 左键 破坏 · 右键 放置/交谈 · E 交谈 · 1-9 切换方块 · M 静音 · F 飞行 · P 剧本</div>
+<div class="hud" id="help">WASD 移动 · 空格 跳 · 按住左键 挖掘 · 右键 放置/交谈/吃 · E 交谈 · 1-9 选物品 · M 静音 · P 剧本</div>
 <div class="hud" id="hotbar"></div><div class="hud" id="xyz"></div><div id="sm" onclick="ED.enter()">🎬 剧本模式</div>
 <div id="touch"><div id="look"></div><div id="joy"></div>
 <div class="b" id="bJ" style="right:18px;bottom:96px">⬆</div><div class="b" id="bB" style="right:88px;bottom:56px">⛏</div><div class="b" id="bP" style="right:18px;bottom:170px">🧱</div></div>
@@ -69,6 +69,6 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:var(--ink);
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script>
 /* 游戏代码按顺序加载（时间戳防缓存，改了代码刷新即生效） */
-["util", "skins-custom", "atlas", "world", "render", "model", "npc", "ui", "story", "input", "loop", "story-data", "editor-json", "editor", "assets", "main"].forEach(n=>document.write('<script src="js/'+n+'.js?'+(+new Date)+'"><\/script>'));
+["util", "skins-custom", "gui-assets", "atlas", "world", "render", "model", "npc", "ui", "survival", "story", "input", "loop", "story-data", "editor-json", "editor", "assets", "main"].forEach(n=>document.write('<script src="js/'+n+'.js?'+(+new Date)+'"><\/script>'));
 </script>
 </body></html>

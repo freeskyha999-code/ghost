@@ -136,6 +136,8 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;touch-actio
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>const J=a=>a.join("");</script>
+<script src="../blockstory/js/gui-assets.js"></script>
 <script>
 (function(){
 "use strict";
@@ -736,6 +738,7 @@ function installEvents(){
 async function boot(){
  try{
   initThree();installEvents();
+  if(typeof GUI!=="undefined"&&GUI.hotbar){$("#palette").style.backgroundImage="url("+GUI.hotbar+")";$("#palette").style.backgroundSize="auto 100%";$("#palette").style.backgroundRepeat="repeat-x";}
   await openDB();
   const list=await listWorlds();
   if(list.length){

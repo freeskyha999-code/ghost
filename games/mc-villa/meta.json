@@ -1,0 +1,11 @@
+{
+  "name": "两层别墅",
+  "en": "MINECRAFT VILLA",
+  "desc": "用原版方块搭起的两层小别墅，带院子和周边田野。横屏第一人称走进去逛逛，每个房间都摆满了家具，还能开关门、切换昼夜。",
+  "tags": ["build"],
+  "status": "可玩",
+  "platform": ["手机", "电脑"],
+  "cover": [],
+  "added": "2026-10-18",
+  "featured": false
+}

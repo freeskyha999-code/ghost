@@ -34,3 +34,6 @@ done
 (cd games/blockstory && find assets -type f | sort | jq -R . | jq -s . > manifest.json)
 rm -rf tmp pack.zip
 echo "done: $(find "$A" -type f | wc -l) files"
+
+# 别墅场景（games/mc-villa）的素材与封面，单独提取；失败不影响上面的方块叙事引擎素材
+bash tools/extract-villa-assets.sh || echo "别墅素材提取失败，见上方日志"

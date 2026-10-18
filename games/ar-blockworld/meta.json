@@ -1,0 +1,17 @@
+{
+  "name": "AR 方块世界",
+  "en": "AR BLOCK WORLD",
+  "desc": "在现实空间放置、挖掘和合成方块。支持多区域锚点管理、朝向校准、自动存档与存档导入导出。",
+  "tags": [
+    "sandbox",
+    "ar"
+  ],
+  "status": "开发中",
+  "platform": [
+    "Android（WebXR AR）",
+    "电脑/手机预览"
+  ],
+  "cover": "games/blockstory/assets/tex/grass_block_top.png",
+  "added": "2026-10-19",
+  "featured": false
+}

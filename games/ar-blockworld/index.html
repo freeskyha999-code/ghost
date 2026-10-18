@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#10140f">
+<title>AR 方块世界 · GHOST</title>
+<style>
+:root{color-scheme:dark;--bg:#10140f;--panel:rgba(18,23,17,.91);--edge:#52634b;--text:#f0f4e9;--muted:#b2c0a7;--gold:#e7cf79;--ok:#9ee39b;--warn:#ffcf78;--bad:#ff9b92}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10140f;color:var(--text);font:14px/1.45 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;overscroll-behavior:none}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer;touch-action:manipulation}button:disabled{opacity:.45;cursor:not-allowed}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;background:linear-gradient(#b4d5ef,#e7e8d2 60%,#9cab75)}
+#veil{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 30%,#31472bcf,#10140ff7 70%)}
+.startcard{width:min(540px,100%);max-height:94dvh;overflow:auto;background:#151c13f2;border:1px solid #748768;border-radius:22px;padding:24px;box-shadow:0 28px 90px #0009}
+.kicker{font:700 10px ui-monospace,monospace;letter-spacing:.24em;color:var(--gold)}h1{font-size:clamp(27px,7vw,42px);line-height:1.06;margin:10px 0 12px;letter-spacing:-.04em}.lead{color:#c0cdb8;margin:0 0 18px;max-width:52ch}
+.featuregrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.feature{border:1px solid #506148;background:#ffffff08;border-radius:12px;padding:10px}.feature b{display:block;font-size:13px}.feature span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.primary,.secondary,.danger{border:1px solid #7e946e;background:#dfe9d3;color:#172013;border-radius:10px;padding:12px 15px;font-weight:800}.primary{width:100%;font-size:15px}.secondary{background:#253220;color:#f0f4e9;border-color:#52634b;font-weight:650}.danger{background:#512a25;border-color:#9d584e;color:#fff1ed;font-weight:650}.stack{display:flex;gap:8px;flex-wrap:wrap}.stack>*{flex:1}
+.smallnote{font-size:11px;color:#aab6a1;margin-top:12px}.hidden{display:none!important}
+#top{position:fixed;z-index:5;top:env(safe-area-inset-top,8px);left:8px;right:8px;display:flex;gap:7px;align-items:flex-start;pointer-events:none}
+.chip{background:var(--panel);border:1px solid #809174;border-radius:10px;padding:7px 9px;box-shadow:0 3px 14px #0003;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:11px;max-width:54vw;pointer-events:auto}
+#status{display:flex;gap:6px;align-items:center;flex:1;min-width:0;color:#e4eddc}#statusText{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:7px;height:7px;flex:none;border-radius:50%;background:var(--warn)}.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+#top button,#top a{pointer-events:auto;text-decoration:none}
+#worldbar{position:fixed;z-index:6;top:calc(env(safe-area-inset-top,8px) + 43px);left:8px;right:8px;display:flex;gap:6px;pointer-events:none;align-items:center}
+#worldbar>*{pointer-events:auto}
+#worlds{min-width:0;max-width:54%;flex:1;background:var(--panel);border:1px solid #64755b;border-radius:9px;padding:8px;font-size:12px}
+#newName{min-width:0;width:28%;background:#152012db;border:1px solid #52634b;border-radius:9px;padding:8px;font-size:12px}
+.mini{border:1px solid #718567;background:var(--panel);border-radius:9px;padding:8px 10px;font-size:11px;white-space:nowrap}
+#reticle{position:fixed;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);border:1.5px solid #fff;box-shadow:0 0 0 1px #0008;border-radius:50%;z-index:2;pointer-events:none;display:none}
+#reticle:before,#reticle:after{content:"";position:absolute;background:#fff;box-shadow:0 0 0 1px #0008}#reticle:before{width:1px;height:30px;left:8.5px;top:-7px}#reticle:after{height:1px;width:30px;left:-7px;top:8.5px}
+#bottom{position:fixed;z-index:6;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,6px) + 7px);display:flex;flex-direction:column;gap:7px;pointer-events:none}
+#palette{display:flex;gap:5px;overflow-x:auto;padding:5px;background:var(--panel);border:1px solid #6e8064;border-radius:12px;pointer-events:auto;scrollbar-width:thin}
+.blockbtn{position:relative;flex:none;width:52px;height:58px;padding:4px;border:2px solid #56654d;background:#232b20;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.blockbtn.selected{border-color:#f6e8a1;box-shadow:0 0 0 1px #f6e8a1,inset 0 0 0 1px #f6e8a1}
+.blockbtn img{width:28px;height:28px;object-fit:cover;image-rendering:pixelated;background:#303b2a}
+.blockbtn b{font-size:9px;font-weight:700;line-height:1;color:#e7eddf;white-space:nowrap}
+.blockbtn small{font-size:9px;color:#b5c7a7;line-height:1}
+#actions{display:flex;align-items:stretch;gap:6px;pointer-events:auto}
+.action{flex:1;min-width:0;border:1px solid #67795c;background:var(--panel);border-radius:11px;padding:11px 7px;font-weight:750;font-size:12px;box-shadow:0 4px 14px #0004}
+.action.active{background:#e4efcf;color:#1b2517;border-color:#f8ffef}
+#actions .big{flex:1.25}
+#tools{display:flex;gap:5px;pointer-events:auto;overflow-x:auto}
+#tools button{flex:none;border:1px solid #586b50;background:#1a2317eb;border-radius:8px;padding:7px 9px;font-size:11px;white-space:nowrap}
+#anchorPanel,#craftPanel,#helpPanel{position:fixed;z-index:10;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,6px) + 158px);max-height:min(47dvh,420px);overflow:auto;background:var(--panel);border:1px solid #819375;border-radius:14px;padding:12px;box-shadow:0 14px 45px #0008;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.panelhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.panelhead b{font-size:14px}.panelhead button{border:1px solid #52634b;background:#202b1c;border-radius:7px;padding:5px 9px}
+.anchorrow{padding:9px 0;border-bottom:1px solid #384633;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.anchorrow:last-child{border-bottom:0}.anchorrow strong{font-size:12px}.anchorrow p{font-size:10px;color:var(--muted);margin:3px 0 0}.anchorrow .state{font-size:10px;color:var(--gold);text-align:right}.anchorrow .state.ok{color:var(--ok)}
+#anchorControls{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}#anchorControls>*{flex:1}
+#anchorLabel{width:100%;min-width:0;background:#0f150e;border:1px solid #516349;border-radius:8px;padding:9px}
+.recipe{display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid #384633;padding:10px 0}.recipe:last-child{border-bottom:0}.recipe p{margin:2px 0 0;color:var(--muted);font-size:11px}.recipe button{border:1px solid #718567;background:#dfe9d3;color:#172013;border-radius:8px;padding:8px;font-size:11px;font-weight:800}
+#toast{position:fixed;z-index:15;left:50%;top:calc(env(safe-area-inset-top,8px) + 95px);transform:translateX(-50%);width:max-content;max-width:90vw;background:#10160fed;border:1px solid #90a280;border-radius:11px;padding:9px 13px;font-size:12px;text-align:center;box-shadow:0 5px 18px #0008;pointer-events:none;opacity:0;transition:opacity .18s}
+#toast.show{opacity:1}
+#hint{position:fixed;left:50%;top:calc(50% + 28px);transform:translateX(-50%);padding:5px 9px;background:#10160fa8;color:white;border-radius:7px;font-size:10px;z-index:2;pointer-events:none;white-space:nowrap}
+#footerback{position:fixed;z-index:7;right:8px;top:calc(env(safe-area-inset-top,8px) + 8px);background:#11180edb;border:1px solid #596b50;border-radius:9px;padding:7px 10px;color:#f0f4e9;text-decoration:none;font-size:11px}
+#countline{font-size:10px;color:#c5d2bb;text-align:right;margin-right:4px;text-shadow:0 1px 4px #000}
+@media(min-width:780px){#bottom{left:auto;width:420px;right:14px;bottom:14px}#anchorPanel,#craftPanel,#helpPanel{left:auto;right:14px;width:420px;bottom:195px}#worldbar{right:auto;width:620px}#newName{width:170px}#worlds{max-width:240px}#footerback{top:10px}#top{right:auto;width:calc(100% - 130px)}}
+@media(max-height:620px){.blockbtn{height:48px;width:47px}.blockbtn img{width:23px;height:23px}#bottom{gap:4px}#tools button{padding:5px 8px}#actions .action{padding:8px 6px}}
+</style>
+</head>
+<body>
+<canvas id="view" aria-label="增强现实方块世界"></canvas>
+<div id="top">
+  <div id="status" class="chip"><span id="statusDot" class="dot"></span><span id="statusText">正在初始化世界…</span></div>
+  <button id="musicBtn" class="chip" type="button">♫ 音乐关</button>
+  <a id="footerback" href="../../">← 游戏库</a>
+</div>
+<div id="worldbar">
+  <select id="worlds" aria-label="选择世界"></select>
+  <input id="newName" maxlength="28" value="新世界" placeholder="新世界名称" aria-label="新世界名称">
+  <button id="newWorld" class="mini" type="button">＋ 世界</button>
+</div>
+<div id="reticle"></div><div id="hint">准星对准平面或方块</div><div id="toast" role="status" aria-live="polite"></div>
+<div id="anchorPanel" class="hidden">
+  <div class="panelhead"><b>空间锚点管理</b><button type="button" data-close="anchorPanel">关闭</button></div>
+  <div id="anchorList"></div>
+  <div id="anchorControls">
+    <input id="anchorLabel" maxlength="28" placeholder="锚点名称，例如：客厅桌角">
+    <button id="createAnchor" class="secondary" type="button">在准星处新建锚点</button>
+    <button id="relocateAnchor" class="secondary" type="button">重新定位选中锚点</button>
+    <button id="rotateLeft" class="secondary" type="button">↶ 旋转 −15°</button>
+    <button id="rotateRight" class="secondary" type="button">↷ 旋转 +15°</button>
+    <button id="renameAnchor" class="secondary" type="button">重命名</button>
+    <button id="deleteAnchor" class="danger" type="button">删除锚点区域</button>
+  </div>
+  <p class="smallnote">一个锚点区域保存一组独立方块。支持持久锚点的浏览器会尝试自动恢复；否则必须回到原位置，用准星重新定位该锚点。旋转校准会保存。</p>
+</div>
+<div id="craftPanel" class="hidden">
+  <div class="panelhead"><b>合成台</b><button type="button" data-close="craftPanel">关闭</button></div>
+  <div class="recipe"><div><strong>橡木木板 ×4</strong><p>消耗：橡木原木 ×1</p></div><button type="button" data-recipe="planks">合成</button></div>
+  <div class="recipe"><div><strong>工作台 ×1</strong><p>消耗：橡木木板 ×4</p></div><button type="button" data-recipe="crafting_table">合成</button></div>
+  <p class="smallnote">这是第一版基础配方；采集已放置的方块会返还对应物品，方块和背包均自动存档。</p>
+</div>
+<div id="helpPanel" class="hidden">
+  <div class="panelhead"><b>操作与定位说明</b><button type="button" data-close="helpPanel">关闭</button></div>
+  <p>1. 点击「启动 AR」并允许浏览器使用相机。缓慢移动手机，让系统识别桌面或地面。</p>
+  <p>2. 准星落在目标平面后，打开「锚点」并建立主锚点。方块都按该锚点的本地网格保存，不使用屏幕坐标。</p>
+  <p>3. 下次打开先尝试恢复持久锚点。若当前浏览器不支持持久锚点，选中锚点后回到原来的物理位置，把准星对准原锚点点位，点击「重新定位」。必要时用 ±15° 校准朝向。</p>
+  <p>4. 可创建多个有名字的锚点区域；每个区域独立保存自己的方块。导出存档可备份建筑，但空间锚点句柄不能跨设备导入，导入后需重新定位。</p>
+  <p>5. 挖掘会把方块放回背包；背包中的方块数量不足时不能放置。合成台提供木板和工作台配方。</p>
+  <p>重要：精确自动恢复依赖设备、浏览器和 AR 系统的持久锚点支持；普通网页无法对所有手机承诺跨天自动重定位。若未显示「持久锚点已恢复」，请按引导手动重新定位，不能假定旧坐标仍准确。</p>
+</div>
+<div id="bottom">
+  <div id="countline">背包：载入中</div>
+  <div id="palette" aria-label="方块快捷栏"></div>
+  <div id="actions">
+    <button id="placeMode" class="action active" type="button">▧ 放置</button>
+    <button id="mineMode" class="action" type="button">⛏ 挖掘</button>
+    <button id="actBtn" class="action big" type="button">放置方块</button>
+  </div>
+  <div id="tools">
+    <button id="arBtn" type="button">◎ 启动 AR</button>
+    <button id="previewBtn" type="button">▦ 桌面预览</button>
+    <button id="anchorBtn" type="button">⌖ 锚点</button>
+    <button id="craftBtn" type="button">⚒ 合成</button>
+    <button id="saveBtn" type="button">✓ 立即保存</button>
+    <button id="exportBtn" type="button">⇩ 导出存档</button>
+    <button id="importBtn" type="button">⇧ 导入存档</button>
+    <button id="helpBtn" type="button">? 帮助</button>
+    <input id="importFile" type="file" accept="application/json,.json" class="hidden">
+  </div>
+</div>
+<div id="veil">
+  <div class="startcard">
+    <div class="kicker">GHOST GAME LIBRARY / AR SANDBOX</div>
+    <h1>AR 方块世界</h1>
+    <p class="lead">把熟悉的方块放进现实空间。建造、挖掘、合成、保存；每个建筑区域绑定独立空间锚点。</p>
+    <div class="featuregrid">
+      <div class="feature"><b>持久锚点恢复</b><span>支持时自动恢复，不支持时提供重定位流程</span></div>
+      <div class="feature"><b>多个锚点区域</b><span>分区命名、重新定位、旋转校准</span></div>
+      <div class="feature"><b>本地自动存档</b><span>方块、背包、配方和锚点元数据写入 IndexedDB</span></div>
+      <div class="feature"><b>原版风格资源</b><span>直接读取 GHOST 中现有方块贴图、BGM 和音效</span></div>
+    </div>
+    <button id="launchAR" class="primary" type="button">启动 AR · 扫描现实空间</button>
+    <div class="stack" style="margin-top:8px"><button id="launchPreview" class="secondary" type="button">先进入桌面预览</button><button id="launchResume" class="secondary" type="button">载入存档后继续</button></div>
+    <p id="startupMessage" class="smallnote">AR 需要安全上下文（HTTPS）和支持 WebXR AR / ARCore 的浏览器。若设备不支持，可先用桌面预览检查建造与存档。</p>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+"use strict";
+const $=function(s){return document.querySelector(s);};
+const TEXTURE_BASE="../blockstory/assets/tex/";
+const SOUND_BASE="../blockstory/assets/snd/";
+const MUSIC_BASE="../blockstory/assets/music/";
+const DB_NAME="ghost-ar-blockworld-v1";
+const DB_STORE="worlds";
+const CATALOG={
+ grass:{name:"草方块",side:"grass_block_side",top:"grass_block_top",bottom:"dirt",icon:"grass_block_top"},
+ dirt:{name:"泥土",side:"dirt",top:"dirt",bottom:"dirt",icon:"dirt"},
+ stone:{name:"石头",side:"stone",top:"stone",bottom:"stone",icon:"stone"},
+ planks:{name:"橡木木板",side:"oak_planks",top:"oak_planks",bottom:"oak_planks",icon:"oak_planks"},
+ log:{name:"橡木原木",side:"oak_log",top:"oak_log_top",bottom:"oak_log_top",icon:"oak_log"},
+ sand:{name:"沙子",side:"sand",top:"sand",bottom:"sand",icon:"sand"},
+ bricks:{name:"砖块",side:"bricks",top:"bricks",bottom:"bricks",icon:"bricks"},
+ glass:{name:"玻璃",side:"glass",top:"glass",bottom:"glass",icon:"glass",transparent:true},
+ crafting_table:{name:"工作台",side:"crafting_table_side",top:"crafting_table_top",bottom:"oak_planks",icon:"crafting_table_top"}
+};
+const INITIAL_INVENTORY={grass:32,dirt:32,stone:32,planks:32,log:16,sand:16,bricks:16,glass:8,crafting_table:0};
+let db=null,world=null,activeAnchorId=null,selectedBlock="grass",mode="place",xrSession=null,hitTestSource=null,viewerSpace=null;
+let lastHitResult=null,lastHitPose=null,pendingXRAction=null,anchorRuntime=new Map(),anchorGroups=new Map(),blockMaterials={},textureCache={},materialCache={},blockGeometry=null,previewMode=false,musicEnabled=false,music=null,saveTimer=null,toastTimer=null,saveBusy=false,dirty=false;
+let renderer,scene,camera,reticle,controls,previewGround,raycaster;
+const pointer=new THREE.Vector2(0,0);
+const rotateTemp=new THREE.Matrix4();
+const rayHits=[];
+let worldLoaded=false;
+function uid(){return "a-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8);}
+function cleanName(value,fallback){const name=String(value||"").trim().slice(0,28);return name||fallback;}
+function say(message,kind){
+ const el=$("#toast");el.textContent=message;el.classList.add("show");el.style.borderColor=kind==="bad"?"#b66a5f":kind==="ok"?"#91bd7c":"#90a280";
+ clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove("show");},3300);
+ $("#statusText").textContent=message;
+ $("#statusDot").className="dot "+(kind==="bad"?"bad":kind==="ok"?"ok":"");
+}
+function setStatus(message,kind){$("#statusText").textContent=message;$("#statusDot").className="dot "+(kind==="bad"?"bad":kind==="ok"?"ok":"");}
+function newWorldRecord(name){
+ const now=Date.now();
+ return {schema:1,id:uid(),name:cleanName(name,"方块世界"),createdAt:now,updatedAt:now,anchors:[],inventory:Object.assign({},INITIAL_INVENTORY),stats:{placed:0,mined:0,crafted:0}};
+}
+function clone(value){return JSON.parse(JSON.stringify(value));}
+function openDB(){
+ return new Promise(function(resolve,reject){
+  if(!("indexedDB" in window)){reject(new Error("当前浏览器不支持 IndexedDB，无法可靠保存世界"));return;}
+  const request=indexedDB.open(DB_NAME,1);
+  request.onupgradeneeded=function(){const d=request.result;if(!d.objectStoreNames.contains(DB_STORE))d.createObjectStore(DB_STORE,{keyPath:"id"});};
+  request.onsuccess=function(){db=request.result;db.onversionchange=function(){db.close();};resolve(db);};
+  request.onerror=function(){reject(request.error||new Error("打开本地存档失败"));};
+ });
+}
+function dbRequest(mode,operation){
+ return new Promise(function(resolve,reject){
+  if(!db){reject(new Error("存档数据库尚未准备好"));return;}
+  const tx=db.transaction(DB_STORE,mode),store=tx.objectStore(DB_STORE);
+  let request;
+  try{request=operation(store);}catch(e){reject(e);return;}
+  let result;
+  if(request){request.onsuccess=function(){result=request.result;};request.onerror=function(){reject(request.error||new Error("存档读取失败"));};}
+  tx.oncomplete=function(){resolve(result);};
+  tx.onerror=function(){reject(tx.error||new Error("存档事务失败"));};
+  tx.onabort=function(){reject(tx.error||new Error("存档事务中断"));};
+ });
+}
+async function listWorlds(){return await dbRequest("readonly",function(store){return store.getAll();});}
+async function saveNow(showMessage){
+ if(!world||!db)return;
+ if(saveBusy){dirty=true;return;}
+ saveBusy=true;dirty=false;
+ world.updatedAt=Date.now();
+ try{
+  await dbRequest("readwrite",function(store){return store.put(clone(world));});
+  localStorage.setItem("ghost-ar-last-world",world.id);
+  await refreshWorldSelect();
+  setStatus("已保存 · "+new Date(world.updatedAt).toLocaleTimeString(),"ok");
+  if(showMessage)say("世界、方块和背包已保存","ok");
+ }catch(error){say("存档失败："+(error.message||"未知错误"),"bad");}
+ finally{saveBusy=false;if(dirty){queueSave();}}
+}
+function queueSave(){
+ if(!world)return;
+ dirty=true;clearTimeout(saveTimer);
+ saveTimer=setTimeout(function(){saveNow(false);},350);
+ setStatus("有更改，正在自动保存…");
+}
+async function refreshWorldSelect(){
+ if(!db)return;
+ let list=[];try{list=await listWorlds();}catch(e){return;}
+ list.sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
+ const select=$("#worlds");select.innerHTML="";
+ list.forEach(function(item){const option=document.createElement("option");option.value=item.id;option.textContent=item.name+" · "+new Date(item.updatedAt||item.createdAt).toLocaleDateString();select.appendChild(option);});
+ if(world){select.value=world.id;}
+}
+function clearRuntime(){
+ anchorRuntime.forEach(function(runtime){if(runtime.anchor&&typeof runtime.anchor.delete==="function"){try{runtime.anchor.delete();}catch(e){}}});
+ anchorRuntime.clear();
+ anchorGroups.forEach(function(group){scene.remove(group);});
+ anchorGroups.clear();activeAnchorId=null;lastHitResult=null;lastHitPose=null;pendingXRAction=null;
+}
+function ensureAnchorGroup(anchorData){
+ let group=anchorGroups.get(anchorData.id);
+ if(!group){group=new THREE.Group();group.matrixAutoUpdate=false;group.visible=false;group.userData.anchorId=anchorData.id;scene.add(group);anchorGroups.set(anchorData.id,group);}
+ return group;
+}
+function makeTexture(name){
+ if(textureCache[name])return textureCache[name];
+ const tex=new THREE.TextureLoader().load(TEXTURE_BASE+name+".png",function(t){t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestMipmapNearestFilter;t.generateMipmaps=true;t.colorSpace=THREE.SRGBColorSpace;},undefined,function(){console.warn("贴图加载失败：",name);});
+ tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestMipmapNearestFilter;tex.generateMipmaps=true;
+ if("colorSpace" in tex)tex.colorSpace=THREE.SRGBColorSpace;else if("encoding" in tex)tex.encoding=THREE.sRGBEncoding;
+ textureCache[name]=tex;return tex;
+}
+function material(textureName,transparent){
+ const key=textureName+"|"+(transparent?"1":"0");
+ if(materialCache[key])return materialCache[key];
+ const map=makeTexture(textureName);
+ materialCache[key]=new THREE.MeshStandardMaterial({map:map,roughness:1,metalness:0,transparent:!!transparent,alphaTest:transparent?.08:0});
+ return materialCache[key];
+}
+function makeMaterials(type){
+ const block=CATALOG[type]||CATALOG.stone;
+ return [material(block.side,block.transparent),material(block.side,block.transparent),material(block.top,block.transparent),material(block.bottom,block.transparent),material(block.side,block.transparent),material(block.side,block.transparent)];
+}
+function makeBlockMesh(anchorData,block){
+ const mesh=new THREE.Mesh(blockGeometry,blockMaterials[block.type]||blockMaterials.stone);
+ mesh.position.set(block.x,block.y+0.5,block.z);
+ mesh.userData={isBlock:true,anchorId:anchorData.id,blockId:block.id||[block.x,block.y,block.z].join(","),x:block.x,y:block.y,z:block.z,type:block.type};
+ mesh.castShadow=false;mesh.receiveShadow=false;
+ return mesh;
+}
+function redrawAnchor(anchorData){
+ const group=ensureAnchorGroup(anchorData);
+ while(group.children.length){const child=group.children.pop();if(child.geometry&&child.geometry!==blockGeometry)child.geometry.dispose();}
+ (anchorData.blocks||[]).forEach(function(block){group.add(makeBlockMesh(anchorData,block));});
+}
+function redrawWorld(){
+ anchorGroups.forEach(function(group){scene.remove(group);});
+ anchorGroups.clear();
+ if(!world)return;
+ (world.anchors||[]).forEach(function(anchor){const group=ensureAnchorGroup(anchor);redrawAnchor(anchor);const runtime=anchorRuntime.get(anchor.id);if(runtime){group.visible=true;applyRuntimeMatrix(anchor,runtime);}});
+ renderPalette();renderAnchors();renderCounts();
+}
+function applyRuntimeMatrix(anchorData,runtime,frame,referenceSpace){
+ const group=ensureAnchorGroup(anchorData);
+ let baseMatrix=null;
+ if(runtime.preview&&runtime.matrix){baseMatrix=runtime.matrix.clone();}
+ else if(runtime.anchor&&runtime.anchor.anchorSpace&&frame&&referenceSpace){
+  const pose=frame.getPose(runtime.anchor.anchorSpace,referenceSpace);
+  if(pose){baseMatrix=new THREE.Matrix4().fromArray(pose.transform.matrix);runtime.lastMatrix=baseMatrix.clone();}
+ }else if(runtime.matrix){baseMatrix=runtime.matrix.clone();}
+ else if(runtime.lastMatrix){baseMatrix=runtime.lastMatrix.clone();}
+ if(!baseMatrix){group.visible=false;return;}
+ const correction=new THREE.Matrix4().makeRotationY(anchorData.yawCorrection||0);
+ group.matrix.copy(baseMatrix).multiply(correction);
+ group.matrixWorldNeedsUpdate=true;group.visible=true;
+}
+function renderPalette(){
+ const palette=$("#palette");palette.innerHTML="";
+ Object.keys(CATALOG).forEach(function(key){
+  const item=CATALOG[key],button=document.createElement("button");button.type="button";button.className="blockbtn"+(key===selectedBlock?" selected":"");button.setAttribute("aria-label",item.name+"，库存 "+(world&&world.inventory[key]||0));
+  const image=document.createElement("img");image.src=TEXTURE_BASE+item.icon+".png";image.alt="";
+  const name=document.createElement("b");name.textContent=item.name;
+  const count=document.createElement("small");count.textContent=String(world&&world.inventory[key]||0);
+  button.append(image,name,count);button.addEventListener("click",function(){selectedBlock=key;renderPalette();renderCounts();});
+  palette.appendChild(button);
+ });
+}
+function renderCounts(){
+ if(!world)return;
+ const sum=Object.keys(world.inventory||{}).reduce(function(total,key){return total+(world.inventory[key]||0);},0);
+ const totalBlocks=(world.anchors||[]).reduce(function(total,anchor){return total+(anchor.blocks||[]).length;},0);
+ $("#countline").textContent="背包 "+sum+" 件 · 建筑方块 "+totalBlocks+" · 已采集 "+(world.stats.mined||0)+" · 已放置 "+(world.stats.placed||0);
+ renderPalette();
+}
+function anchorStateText(anchor){
+ const runtime=anchorRuntime.get(anchor.id);
+ if(runtime&&runtime.preview)return "预览中";
+ if(runtime&&runtime.anchor)return "本次会话已定位";
+ if(runtime&&runtime.matrix)return "本次会话固定坐标";
+ if(anchor.persistentHandle)return "等待系统恢复 / 可手动重定位";
+ return "需要重新定位";
+}
+function renderAnchors(){
+ const list=$("#anchorList");if(!world){list.textContent="没有已打开的世界";return;}
+ if(!world.anchors.length){list.innerHTML='<p class="smallnote">当前世界没有空间锚点。扫描到平面后，建立第一个主锚点。</p>';return;}
+ list.innerHTML="";
+ world.anchors.forEach(function(anchor,index){
+  const row=document.createElement("div");row.className="anchorrow";
+  const left=document.createElement("div"),right=document.createElement("div");
+  const title=document.createElement("strong");title.textContent=(index===0?"主锚点 · ":"区域 "+(index+1)+" · ")+anchor.name;
+  const desc=document.createElement("p");desc.textContent=(anchor.blocks||[]).length+" 个方块 · 朝向校准 "+Math.round((anchor.yawCorrection||0)*180/Math.PI)+"°";
+  const state=document.createElement("div");state.className="state"+(anchorRuntime.has(anchor.id)?" ok":"");state.textContent=anchorStateText(anchor);
+  left.append(title,desc);right.append(state);
+  row.append(left,right);
+  row.style.background=anchor.id===activeAnchorId?"#ffffff0a":"transparent";
+  row.addEventListener("click",function(){activeAnchorId=anchor.id;$("#anchorLabel").value=anchor.name;renderAnchors();say("当前建造区域："+anchor.name,"ok");});
+  list.appendChild(row);
+ });
+}
+function selectedAnchor(){return world&&world.anchors.find(function(a){return a.id===activeAnchorId;})||null;}
+function getGroup(id){return anchorGroups.get(id)||null;}
+function selectedRuntime(){return activeAnchorId?anchorRuntime.get(activeAnchorId)||null:null;}
+function renderMode(){
+ $("#placeMode").classList.toggle("active",mode==="place");
+ $("#mineMode").classList.toggle("active",mode==="mine");
+ $("#actBtn").textContent=mode==="place"?"放置方块":"挖掘并回收";
+ $("#hint").textContent=previewMode?"桌面预览：点击地面或方块进行操作":"准星对准平面或方块";
+}
+function renderAll(){renderPalette();renderAnchors();renderCounts();renderMode();}
+function addAnchorRecord(name,matrix,persistentHandle,runtime,status){
+ const record={id:uid(),name:cleanName(name,"锚点 "+((world.anchors||[]).length+1)),createdAt:Date.now(),yawCorrection:0,persistentHandle:persistentHandle||null,lastPose:Array.from(matrix.elements),blocks:[],restoreStatus:status||"manual"};
+ world.anchors.push(record);
+ anchorRuntime.set(record.id,runtime);
+ const group=ensureAnchorGroup(record);group.matrix.copy(matrix);group.matrixWorldNeedsUpdate=true;group.visible=true;redrawAnchor(record);
+ activeAnchorId=record.id;
+ queueSave();renderAll();
+ return record;
+}
+async function askPersistentHandle(runtime){
+ if(!runtime||!runtime.anchor||typeof runtime.anchor.requestPersistentHandle!=="function")return null;
+ try{const handle=await runtime.anchor.requestPersistentHandle();return handle||null;}catch(error){console.warn("持久锚点请求失败",error);return null;}
+}
+async function createRuntimeFromHit(hit,frame,referenceSpace){
+ const pose=hit&&hit.getPose?hit.getPose(referenceSpace):null;
+ if(!pose)throw new Error("尚未识别平面，请缓慢移动手机并将准星对准桌面或地面");
+ const matrix=new THREE.Matrix4().fromArray(pose.transform.matrix);
+ let anchor=null;
+ if(hit&&typeof hit.createAnchor==="function"){
+  try{anchor=await hit.createAnchor();}catch(e){console.warn("HitTest createAnchor 不可用",e);}
+ }
+ if(!anchor&&frame&&typeof frame.createAnchor==="function"){
+  try{anchor=await frame.createAnchor(pose.transform,referenceSpace);}catch(e){console.warn("XRFrame createAnchor 不可用",e);}
+ }
+ return {anchor:anchor,matrix:matrix,lastMatrix:matrix.clone(),preview:false};
+}
+function createAnchorFromLatestHit(kind,anchorId){
+ if(!xrSession||!lastHitResult||!lastHitPose){say("先启动 AR，并让准星锁定可识别的平面","bad");return;}
+ if(pendingXRAction){say("正在处理锚点，请稍候","");return;}
+ pendingXRAction={kind:kind,anchorId:anchorId||null};
+ say(kind==="new"?"正在建立空间锚点…":"正在重新定位，请保持手机稳定…","");
+}
+async function processPendingHit(hit,frame,referenceSpace){
+ if(!pendingXRAction||!hit)return;
+ const pending=pendingXRAction;pendingXRAction=null;
+ try{
+  const runtime=await createRuntimeFromHit(hit,frame,referenceSpace);
+  if(pending.kind==="new"){
+   const runtimeHandle=await askPersistentHandle(runtime);
+   const record=addAnchorRecord($("#anchorLabel").value,runtime.matrix,runtimeHandle,runtime,runtimeHandle?"persistent":"manual");
+   say(runtimeHandle?"锚点已建立并取得持久句柄":"锚点已建立；此浏览器未提供持久句柄，重开后需重新定位",runtimeHandle?"ok":"");
+   $("#anchorLabel").value=record.name;
+  }else if(pending.kind==="relocate"){
+   const record=world.anchors.find(function(a){return a.id===pending.anchorId;});
+   if(!record){say("找不到该锚点记录","bad");return;}
+   const old=anchorRuntime.get(record.id);if(old&&old.anchor&&typeof old.anchor.delete==="function"){try{old.anchor.delete();}catch(e){}}
+   anchorRuntime.set(record.id,runtime);
+   record.lastPose=Array.from(runtime.matrix.elements);record.restoreStatus="manual";record.lastLocatedAt=Date.now();
+   const group=ensureAnchorGroup(record);group.visible=true;applyRuntimeMatrix(record,runtime);redrawAnchor(record);
+   activeAnchorId=record.id;queueSave();renderAll();
+   say("已重新定位「"+record.name+"」。如建筑方向偏差，可用旋转校准按钮修正。","ok");
+  }
+ }catch(error){say("锚点操作失败："+(error.message||"请重试"),"bad");}
+}
+async function restoreAnchorsForSession(session){
+ for(let i=0;i<world.anchors.length;i++){
+  const record=world.anchors[i];const group=ensureAnchorGroup(record);group.visible=false;
+  if(record.persistentHandle&&typeof session.restorePersistentAnchor==="function"){
+   try{
+    const runtimeAnchor=await session.restorePersistentAnchor(record.persistentHandle);
+    anchorRuntime.set(record.id,{anchor:runtimeAnchor,matrix:null,lastMatrix:null,preview:false});
+    group.visible=true;record.restoreStatus="persistent";record.lastLocatedAt=Date.now();
+    applyRuntimeMatrix(record,anchorRuntime.get(record.id));
+   }catch(error){console.warn("持久锚点恢复失败：",record.name,error);anchorRuntime.delete(record.id);record.restoreStatus="manual";}
+  }else{anchorRuntime.delete(record.id);record.restoreStatus="manual";}
+ }
+ if(!activeAnchorId&&world.anchors.length)activeAnchorId=world.anchors[0].id;
+ queueSave();renderAll();
+ const missing=world.anchors.filter(function(a){return !anchorRuntime.has(a.id);}).length;
+ if(missing){say("已读取存档；"+missing+" 个区域需要重新定位","");}
+ else if(world.anchors.length){say("持久锚点已恢复，建筑正在原空间中重建","ok");}
+ else{say("空间已启动。对准平面后先建立主锚点","");}
+}
+function stopXRRuntime(){
+ hitTestSource=null;viewerSpace=null;
+ anchorRuntime.forEach(function(runtime,id){
+  const record=world&&world.anchors.find(function(a){return a.id===id;});
+  if(runtime&&runtime.anchor&&typeof runtime.anchor.delete==="function"){try{runtime.anchor.delete();}catch(e){}}
+  if(record&&record.persistentHandle)record.restoreStatus="persistent";
+  anchorRuntime.delete(id);
+ });
+ anchorGroups.forEach(function(group){group.visible=false;});
+ lastHitResult=null;lastHitPose=null;pendingXRAction=null;
+ $("#reticle").style.display="none";
+}
+async function startAR(){
+ if(!window.isSecureContext){say("AR 需要 HTTPS 安全连接","bad");return;}
+ if(!navigator.xr||typeof navigator.xr.requestSession!=="function"){say("此浏览器没有 WebXR AR。请用支持 ARCore 的 Android Chrome，或选择桌面预览。","bad");$("#startupMessage").textContent="未检测到 WebXR AR。请使用 HTTPS 下支持 ARCore 的 Android Chrome；桌面预览仍可测试建造与存档。";return;}
+ try{
+  const supported=await navigator.xr.isSessionSupported("immersive-ar");
+  if(!supported){say("设备或浏览器不支持 immersive-ar，请先使用桌面预览","bad");return;}
+  if(previewMode)exitPreview();
+  const session=await navigator.xr.requestSession("immersive-ar",{
+   requiredFeatures:["hit-test"],
+   optionalFeatures:["anchors","plane-detection","dom-overlay"],
+   domOverlay:{root:document.body}
+  });
+  xrSession=session;previewMode=false;renderer.xr.enabled=true;controls.enabled=false;
+  $("#veil").classList.add("hidden");$("#reticle").style.display="block";
+  renderer.xr.setReferenceSpaceType("local");
+  await renderer.xr.setSession(session);
+  const referenceSpace=renderer.xr.getReferenceSpace();
+  viewerSpace=await session.requestReferenceSpace("viewer");
+  hitTestSource=await session.requestHitTestSource({space:viewerSpace});
+  session.addEventListener("end",function(){if(xrSession===session){xrSession=null;stopXRRuntime();renderer.xr.enabled=true;controls.enabled=true;setStatus("AR 已结束；存档仍在本机","");queueSave();}});
+  await restoreAnchorsForSession(session);
+  $("#arBtn").textContent="◉ 退出 AR";
+  say("AR 已启动。先检查锚点状态，再继续建造。","ok");
+ }catch(error){
+  console.error(error);
+  if(xrSession){try{await xrSession.end();}catch(e){}}
+  xrSession=null;
+  say("AR 启动失败："+(error.message||"请检查权限或浏览器支持"),"bad");
+ }
+}
+function previewMatrix(index,anchorData){
+ const m=new THREE.Matrix4().makeTranslation(index*4.5,0,0);
+ m.multiply(new THREE.Matrix4().makeRotationY(anchorData.yawCorrection||0));
+ return m;
+}
+function ensurePreviewAnchor(anchorData,index){
+ const matrix=previewMatrix(index,anchorData);
+ anchorRuntime.set(anchorData.id,{preview:true,matrix:matrix,lastMatrix:matrix.clone(),anchor:null});
+ const group=ensureAnchorGroup(anchorData);group.visible=true;group.matrix.copy(matrix);group.matrixWorldNeedsUpdate=true;redrawAnchor(anchorData);
+}
+function addPreviewGround(){
+ if(previewGround){scene.remove(previewGround);previewGround.geometry.dispose();previewGround=null;}
+ const tex=makeTexture("grass_block_top");tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(20,20);
+ const mat=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide});
+ previewGround=new THREE.Mesh(new THREE.PlaneGeometry(80,80),mat);previewGround.rotation.x=-Math.PI/2;previewGround.position.y=-0.025;previewGround.userData.isPreviewGround=true;scene.add(previewGround);
+}
+function startPreview(){
+ if(xrSession){xrSession.end().catch(function(){});return;}
+ stopXRRuntime();previewMode=true;renderer.xr.enabled=false;controls.enabled=true;
+ addPreviewGround();
+ if(!world.anchors.length){
+  const record={id:uid(),name:"预览区域",createdAt:Date.now(),yawCorrection:0,persistentHandle:null,lastPose:null,blocks:[],restoreStatus:"preview"};
+  world.anchors.push(record);activeAnchorId=record.id;
+ }
+ world.anchors.forEach(function(anchor,index){ensurePreviewAnchor(anchor,index);});
+ if(!activeAnchorId&&world.anchors.length)activeAnchorId=world.anchors[0].id;
+ $("#veil").classList.add("hidden");$("#reticle").style.display="none";
+ $("#arBtn").textContent="◎ 启动 AR";
+ controls.target.set(0,0.5,0);controls.update();
+ renderAll();queueSave();
+ say("桌面预览已启动；预览位置不代表真实空间定位","ok");
+}
+function exitPreview(){
+ previewMode=false;controls.enabled=false;
+ if(previewGround){scene.remove(previewGround);previewGround.geometry.dispose();previewGround=null;}
+ anchorRuntime.clear();anchorGroups.forEach(function(group){group.visible=false;});
+ renderer.xr.enabled=true;$("#reticle").style.display="none";renderAnchors();
+}
+function setMode(newMode){mode=newMode;renderMode();}
+function worldToLocalPosition(anchorId,worldPosition){
+ const group=getGroup(anchorId);if(!group)return null;
+ scene.updateMatrixWorld(true);
+ return group.worldToLocal(worldPosition.clone());
+}
+function blockAtKey(anchorData,x,y,z){
+ return (anchorData.blocks||[]).find(function(b){return b.x===x&&b.y===y&&b.z===z;})||null;
+}
+function inventoryCount(type){return Number(world.inventory[type]||0);}
+function incrementInventory(type,amount){world.inventory[type]=(world.inventory[type]||0)+amount;}
+function decrementInventory(type,amount){
+ if(inventoryCount(type)<amount)return false;
+ world.inventory[type]-=amount;return true;
+}
+function liveBlockMeshes(){
+ const meshes=[];
+ anchorGroups.forEach(function(group){if(group.visible)group.children.forEach(function(child){if(child.userData&&child.userData.isBlock)meshes.push(child);});});
+ return meshes;
+}
+function raycastAt(clientX,clientY){
+ if(clientX===undefined||clientY===undefined){pointer.set(0,0);}
+ else{const rect=renderer.domElement.getBoundingClientRect();pointer.x=((clientX-rect.left)/rect.width)*2-1;pointer.y=-((clientY-rect.top)/rect.height)*2+1;}
+ camera.updateMatrixWorld(true);raycaster.setFromCamera(pointer,camera);
+ const blocks=raycaster.intersectObjects(liveBlockMeshes(),false);
+ let ground=null;
+ if(previewMode&&previewGround){const hits=raycaster.intersectObject(previewGround,false);if(hits.length)ground=hits[0];}
+ return {block:blocks.length?blocks[0]:null,ground:ground};
+}
+function blockMessage(type){return (CATALOG[type]||CATALOG.stone).name;}
+function performAction(clientX,clientY){
+ if(!world)return;
+ const anchor=selectedAnchor(),runtime=selectedRuntime();
+ if(!anchor||!runtime){say("当前建造区尚未定位。打开「锚点」并建立或重新定位","bad");return;}
+ const hit=raycastAt(clientX,clientY);
+ if(mode==="mine"){
+  if(!hit.block){say("准星没有对准方块；对准方块后再挖掘","");return;}
+  const mesh=hit.block.object,anchorId=mesh.userData.anchorId;
+  const owner=world.anchors.find(function(a){return a.id===anchorId;});
+  if(!owner){say("方块存档记录异常，未做更改","bad");return;}
+  const idx=owner.blocks.findIndex(function(b){return b.x===mesh.userData.x&&b.y===mesh.userData.y&&b.z===mesh.userData.z&&b.type===mesh.userData.type;});
+  if(idx<0){say("没有找到对应的方块记录，未做更改","bad");return;}
+  const removed=owner.blocks.splice(idx,1)[0];incrementInventory(removed.type,1);world.stats.mined=(world.stats.mined||0)+1;
+  redrawAnchor(owner);queueSave();renderAll();
+  playBlockSound(removed.type,false);say("已挖掘并回收："+blockMessage(removed.type),"ok");return;
+ }
+ if(!decrementInventory(selectedBlock,1)){say(blockMessage(selectedBlock)+"不足。先挖掘回收方块或合成","bad");return;}
+ let targetWorld=null,normalWorld=new THREE.Vector3(0,1,0);
+ if(hit.block){
+  targetWorld=hit.block.point.clone();
+  normalWorld=hit.block.face.normal.clone().applyMatrix3(new THREE.Matrix3().getNormalMatrix(hit.block.object.matrixWorld)).normalize();
+  targetWorld.add(normalWorld.multiplyScalar(0.51));
+ }else if(previewMode&&hit.ground){targetWorld=hit.ground.point.clone();}
+ else if(xrSession&&reticle.visible){targetWorld=reticle.getWorldPosition(new THREE.Vector3());}
+ else{
+  incrementInventory(selectedBlock,1);say("没有命中可放置的位置","");return;
+ }
+ const local=worldToLocalPosition(activeAnchorId,targetWorld);
+ if(!local){incrementInventory(selectedBlock,1);say("锚点组尚未准备好","bad");return;}
+ const gx=Math.round(local.x),gz=Math.round(local.z),gy=Math.max(0,Math.floor(local.y+0.0001));
+ if(blockAtKey(anchor,gx,gy,gz)){incrementInventory(selectedBlock,1);say("这个位置已经有方块了","");return;}
+ const block={id:uid(),x:gx,y:gy,z:gz,type:selectedBlock};
+ anchor.blocks.push(block);
+ const group=getGroup(anchor.id);if(group)group.add(makeBlockMesh(anchor,block));
+ world.stats.placed=(world.stats.placed||0)+1;
+ queueSave();renderAll();playBlockSound(selectedBlock,true);
+ say("已放置："+blockMessage(selectedBlock),"ok");
+}
+function playBlockSound(type,placing){
+ const group=(type==="grass"||type==="dirt"||type==="sand")?"grass":(type==="planks"||type==="log"||type==="crafting_table")?"wood":"stone";
+ const file=placing?"../blockstory/assets/snd/dig/"+group+"1.ogg":"../blockstory/assets/snd/dig/"+group+"1.ogg";
+ const audio=new Audio(file);audio.volume=.45;audio.play().catch(function(){});
+}
+function toggleMusic(){
+ if(!music){music=new Audio(MUSIC_BASE+"wet_hands.ogg");music.loop=true;music.volume=.28;}
+ musicEnabled=!musicEnabled;
+ if(musicEnabled){music.play().then(function(){$("#musicBtn").textContent="♫ 音乐开";}).catch(function(){musicEnabled=false;$("#musicBtn").textContent="♫ 音乐关";say("浏览器未允许播放音乐，请再点击一次","");});}
+ else{music.pause();$("#musicBtn").textContent="♫ 音乐关";}
+}
+function craft(recipe){
+ if(!world)return;
+ if(recipe==="planks"){
+  if(!decrementInventory("log",1)){say("缺少橡木原木 ×1","bad");return;}
+  incrementInventory("planks",4);world.stats.crafted=(world.stats.crafted||0)+1;
+  say("合成完成：橡木木板 ×4","ok");
+ }else if(recipe==="crafting_table"){
+  if(!decrementInventory("planks",4)){say("缺少橡木木板 ×4","bad");return;}
+  incrementInventory("crafting_table",1);world.stats.crafted=(world.stats.crafted||0)+1;
+  say("合成完成：工作台 ×1","ok");
+ }
+ queueSave();renderAll();
+}
+function showPanel(id){
+ ["anchorPanel","craftPanel","helpPanel"].forEach(function(name){$("#"+name).classList.toggle("hidden",name!==id||!$("#"+id).classList.contains("hidden"));});
+}
+function togglePanel(id){
+ const panel=$("#"+id);const shouldOpen=panel.classList.contains("hidden");
+ ["anchorPanel","craftPanel","helpPanel"].forEach(function(name){$("#"+name).classList.add("hidden");});
+ if(shouldOpen)panel.classList.remove("hidden");
+ if(id==="anchorPanel")renderAnchors();
+}
+async function createWorld(){
+ const record=newWorldRecord($("#newName").value);
+ await dbRequest("readwrite",function(store){return store.put(record);});
+ await loadWorld(record.id);$("#newName").value="";say("已创建新世界："+record.name,"ok");
+}
+async function loadWorld(id){
+ const record=await dbRequest("readonly",function(store){return store.get(id);});
+ if(!record)throw new Error("没有找到该世界的存档");
+ if(xrSession){try{await xrSession.end();}catch(e){}}
+ if(previewMode)exitPreview();
+ clearRuntime();
+ world=record;activeAnchorId=world.anchors&&world.anchors.length?world.anchors[0].id:null;
+ world.inventory=Object.assign({},INITIAL_INVENTORY,world.inventory||{});
+ world.stats=Object.assign({placed:0,mined:0,crafted:0},world.stats||{});
+ (world.anchors||[]).forEach(function(anchor){anchor.blocks=Array.isArray(anchor.blocks)?anchor.blocks:[];ensureAnchorGroup(anchor);});
+ await refreshWorldSelect();redrawWorld();renderAll();
+ localStorage.setItem("ghost-ar-last-world",world.id);
+ setStatus("已载入「"+world.name+"」；请启动 AR 或预览","ok");
+}
+function downloadText(filename,text){
+ const blob=new Blob([text],{type:"application/json;charset=utf-8"}),url=URL.createObjectURL(blob);
+ const a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function exportWorld(){
+ if(!world)return;
+ const backup=clone(world);backup.exportedAt=new Date().toISOString();backup.anchors.forEach(function(anchor){anchor.persistentHandle=null;});
+ downloadText((world.name||"ar-world").replace(/[\\/:*?"<>|]/g,"_")+".arworld.json",JSON.stringify(backup,null,2));
+ say("已导出建筑和背包。导入后需要重新定位空间锚点。","ok");
+}
+async function importWorldFile(file){
+ if(!file)return;
+ try{
+  const data=JSON.parse(await file.text());
+  if(!data||data.schema!==1||!Array.isArray(data.anchors)||!data.inventory||typeof data.inventory!=="object")throw new Error("不是支持的 AR 方块世界存档");
+  if(data.anchors.length>64)throw new Error("锚点数量超出安全上限");
+  let total=0;
+  data.anchors.forEach(function(anchor){
+   if(!Array.isArray(anchor.blocks))throw new Error("锚点方块数据格式错误");
+   total+=anchor.blocks.length;
+   if(anchor.blocks.length>100000)throw new Error("单个区域方块数量过多");
+   anchor.blocks.forEach(function(block){if(!Number.isFinite(block.x)||!Number.isFinite(block.y)||!Number.isFinite(block.z)||!CATALOG[block.type])throw new Error("发现无效方块数据");});
+   anchor.id=uid();anchor.persistentHandle=null;anchor.restoreStatus="manual";anchor.yawCorrection=Number(anchor.yawCorrection)||0;
+  });
+  if(total>200000)throw new Error("总方块数超过导入限制");
+  data.id=uid();data.name=cleanName(data.name,"导入的世界");data.createdAt=Date.now();data.updatedAt=Date.now();data.inventory=Object.assign({},INITIAL_INVENTORY,data.inventory);data.stats=Object.assign({placed:0,mined:0,crafted:0},data.stats||{});delete data.exportedAt;
+  await dbRequest("readwrite",function(store){return store.put(data);});
+  await loadWorld(data.id);say("导入完成。各锚点需在现实空间中重新定位。","ok");
+ }catch(error){say("导入失败："+(error.message||"文件读取失败"),"bad");}
+ finally{$("#importFile").value="";}
+}
+function deleteSelectedAnchor(){
+ const anchor=selectedAnchor();if(!anchor)return;
+ const count=(anchor.blocks||[]).length;
+ if(!confirm("确定删除锚点「"+anchor.name+"」及其中 "+count+" 个方块？此操作会自动保存，无法撤销。"))return;
+ const runtime=anchorRuntime.get(anchor.id);if(runtime&&runtime.anchor&&typeof runtime.anchor.delete==="function"){try{runtime.anchor.delete();}catch(e){}}
+ anchorRuntime.delete(anchor.id);const group=anchorGroups.get(anchor.id);if(group){scene.remove(group);anchorGroups.delete(anchor.id);}
+ world.anchors=world.anchors.filter(function(a){return a.id!==anchor.id;});
+ activeAnchorId=world.anchors.length?world.anchors[0].id:null;queueSave();renderAll();say("锚点区域已删除","ok");
+}
+function editSelectedAnchorName(){
+ const anchor=selectedAnchor();if(!anchor)return;
+ anchor.name=cleanName($("#anchorLabel").value,anchor.name);
+ queueSave();renderAnchors();say("锚点已重命名为「"+anchor.name+"」","ok");
+}
+function rotateSelectedAnchor(delta){
+ const anchor=selectedAnchor();if(!anchor)return;
+ anchor.yawCorrection=(anchor.yawCorrection||0)+delta;
+ anchor.yawCorrection=Math.round(anchor.yawCorrection*10000)/10000;
+ const runtime=anchorRuntime.get(anchor.id);if(runtime){applyRuntimeMatrix(anchor,runtime);}
+ queueSave();renderAnchors();say("已校准「"+anchor.name+"」朝向 "+Math.round(anchor.yawCorrection*180/Math.PI)+"°","ok");
+}
+function initThree(){
+ renderer=new THREE.WebGLRenderer({canvas:$("#view"),alpha:true,antialias:true,powerPreference:"high-performance"});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setSize(window.innerWidth,window.innerHeight,false);
+ renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType("local");
+ if("outputColorSpace" in renderer)renderer.outputColorSpace=THREE.SRGBColorSpace;
+ else renderer.outputEncoding=THREE.sRGBEncoding;
+ scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x69775a,1.25));
+ const sun=new THREE.DirectionalLight(0xffffff,1.15);sun.position.set(3,8,4);scene.add(sun);
+ camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,.01,1000);camera.position.set(5,4,7);camera.lookAt(0,.5,0);scene.add(camera);
+ controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,.5,0);controls.enableDamping=true;controls.enabled=false;controls.update();
+ blockGeometry=new THREE.BoxGeometry(1,1,1);
+ Object.keys(CATALOG).forEach(function(key){blockMaterials[key]=makeMaterials(key);});
+ reticle=new THREE.Group();reticle.matrixAutoUpdate=false;reticle.visible=false;
+ const ring=new THREE.Mesh(new THREE.RingGeometry(.09,.115,32),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide}));
+ ring.rotation.x=-Math.PI/2;reticle.add(ring);
+ const dot=new THREE.Mesh(new THREE.CircleGeometry(.025,16),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide}));dot.rotation.x=-Math.PI/2;reticle.add(dot);scene.add(reticle);
+ raycaster=new THREE.Raycaster();
+ renderer.setAnimationLoop(function(time,frame){
+  if(frame&&xrSession){
+   const referenceSpace=renderer.xr.getReferenceSpace();
+   if(hitTestSource){
+    const hits=frame.getHitTestResults(hitTestSource);
+    if(hits&&hits.length){
+     lastHitResult=hits[0];lastHitPose=lastHitResult.getPose(referenceSpace);
+     if(lastHitPose){reticle.matrix.fromArray(lastHitPose.transform.matrix);reticle.matrixWorldNeedsUpdate=true;reticle.visible=true;}
+     if(pendingXRAction)processPendingHit(lastHitResult,frame,referenceSpace);
+    }else{lastHitResult=null;lastHitPose=null;reticle.visible=false;}
+   }
+   anchorRuntime.forEach(function(runtime,id){
+    if(runtime.preview)return;
+    const record=world&&world.anchors.find(function(a){return a.id===id;});
+    if(record)applyRuntimeMatrix(record,runtime,frame,referenceSpace);
+   });
+  }else if(previewMode&&controls){controls.update();}
+  renderer.render(scene,camera);
+ });
+ window.addEventListener("resize",function(){camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight,false);});
+}
+function installEvents(){
+ $("#launchAR").addEventListener("click",startAR);$("#arBtn").addEventListener("click",function(){if(xrSession){xrSession.end().catch(function(){});}else startAR();});
+ $("#launchPreview").addEventListener("click",function(){startPreview();$("#veil").classList.add("hidden");});
+ $("#previewBtn").addEventListener("click",function(){if(previewMode){exitPreview();$("#veil").classList.remove("hidden");}else startPreview();});
+ $("#launchResume").addEventListener("click",function(){$("#veil").classList.add("hidden");if(world.anchors.length){say("已载入存档；请启动 AR 恢复锚点，或用桌面预览查看方块","ok");}else{say("这个世界尚未建立锚点，先启动 AR 或预览","");}});
+ $("#newWorld").addEventListener("click",function(){createWorld().catch(function(e){say("创建世界失败："+e.message,"bad");});});
+ $("#worlds").addEventListener("change",function(e){loadWorld(e.target.value).catch(function(err){say("载入失败："+err.message,"bad");});});
+ $("#placeMode").addEventListener("click",function(){setMode("place");});$("#mineMode").addEventListener("click",function(){setMode("mine");});
+ $("#actBtn").addEventListener("click",function(){performAction();});
+ $("#view").addEventListener("pointerdown",function(event){if(previewMode){if(event.target!==renderer.domElement)return;performAction(event.clientX,event.clientY);}});
+ $("#anchorBtn").addEventListener("click",function(){togglePanel("anchorPanel");});
+ $("#craftBtn").addEventListener("click",function(){togglePanel("craftPanel");});
+ $("#helpBtn").addEventListener("click",function(){togglePanel("helpPanel");});
+ document.querySelectorAll("[data-close]").forEach(function(button){button.addEventListener("click",function(){ $("#"+button.dataset.close).classList.add("hidden");});});
+ $("#createAnchor").addEventListener("click",function(){if(previewMode){const record={id:uid(),name:cleanName($("#anchorLabel").value,"预览区域 "+(world.anchors.length+1)),createdAt:Date.now(),yawCorrection:0,persistentHandle:null,lastPose:null,blocks:[],restoreStatus:"preview"};world.anchors.push(record);ensurePreviewAnchor(record,world.anchors.length-1);activeAnchorId=record.id;queueSave();renderAll();say("已创建预览区域；该位置不是现实空间锚点","ok");return;}createAnchorFromLatestHit("new");});
+ $("#relocateAnchor").addEventListener("click",function(){const a=selectedAnchor();if(!a){say("请先选择要重新定位的锚点","bad");return;}if(previewMode){say("桌面预览不提供真实空间重定位，请先退出预览并启动 AR","bad");return;}createAnchorFromLatestHit("relocate",a.id);});
+ $("#rotateLeft").addEventListener("click",function(){rotateSelectedAnchor(-Math.PI/12);});$("#rotateRight").addEventListener("click",function(){rotateSelectedAnchor(Math.PI/12);});
+ $("#renameAnchor").addEventListener("click",editSelectedAnchorName);$("#deleteAnchor").addEventListener("click",deleteSelectedAnchor);
+ $("#saveBtn").addEventListener("click",function(){saveNow(true);});
+ $("#exportBtn").addEventListener("click",exportWorld);$("#importBtn").addEventListener("click",function(){$("#importFile").click();});
+ $("#importFile").addEventListener("change",function(e){importWorldFile(e.target.files&&e.target.files[0]);});
+ $("#musicBtn").addEventListener("click",toggleMusic);
+ document.querySelectorAll("[data-recipe]").forEach(function(button){button.addEventListener("click",function(){craft(button.dataset.recipe);});});
+ window.addEventListener("pagehide",function(){if(world&&db){world.updatedAt=Date.now();try{const tx=db.transaction(DB_STORE,"readwrite");tx.objectStore(DB_STORE).put(clone(world));}catch(e){}}if(music)music.pause();});
+ document.addEventListener("visibilitychange",function(){if(document.hidden){if(music)music.pause();if(world)saveNow(false);}else if(musicEnabled&&music)music.play().catch(function(){});});
+}
+async function boot(){
+ try{
+  initThree();installEvents();
+  await openDB();
+  const list=await listWorlds();
+  if(list.length){
+   const last=localStorage.getItem("ghost-ar-last-world");
+   const selected=list.find(function(item){return item.id===last;})||list.sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);})[0];
+   await loadWorld(selected.id);
+  }else{
+   const first=newWorldRecord("我的第一个方块世界");
+   await dbRequest("readwrite",function(store){return store.put(first);});
+   await loadWorld(first.id);
+  }
+  await refreshWorldSelect();
+  setStatus("存档已就绪 · "+world.name,"ok");
+  const support=!!(window.isSecureContext&&navigator.xr);
+  if(!support)$("#startupMessage").textContent="当前浏览器未提供 WebXR AR 或未使用 HTTPS。可用「桌面预览」测试玩法；实际 AR 建议使用支持 ARCore 的 Android Chrome。";
+  else{
+   try{const ok=await navigator.xr.isSessionSupported("immersive-ar");if(!ok)$("#startupMessage").textContent="该设备当前未报告 immersive-ar 支持。可以先预览；请使用兼容 ARCore 的 Android 手机及 Chrome。";}catch(e){}
+  }
+  renderAll();
+ }catch(error){
+  console.error(error);
+  setStatus("初始化失败："+(error.message||"无法打开本地存档"),"bad");
+  $("#startupMessage").textContent="初始化失败："+(error.message||"请尝试使用最新版 Chrome，并允许本地存储。");
+  $("#launchAR").disabled=true;$("#launchResume").disabled=true;
+ }
+}
+boot();
+})();
+</script>
+</body>
+</html>

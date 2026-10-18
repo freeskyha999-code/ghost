@@ -3,33 +3,456 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#08080d">
-<title>正在启动游戏 · GHOST</title>
+<meta name="theme-color" content="#11140f">
+<title>正在打开游戏 · GHOST</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#08080d;color:#f4f1ff;font:15px/1.5 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}body{overflow:hidden}#stage{position:fixed;inset:0;background:#08080d}#game{width:100%;height:100%;border:0;display:block;background:#08080d}#gate{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 40%,#28213e 0,#100e19 48%,#08080d 100%)}.panel{width:min(460px,100%);padding:32px 26px;text-align:center;border:1px solid #ffffff20;border-radius:24px;background:#11101bcc;box-shadow:0 24px 100px #0009;backdrop-filter:blur(20px)}h1{margin:0 0 10px;font-size:clamp(28px,7vw,42px);line-height:1.15}p{color:#b8b3ce;margin:0 0 24px}.btn{display:block;width:100%;padding:14px 18px;border:0;border-radius:13px;background:#f5f2ff;color:#15111f;font:700 16px system-ui;cursor:pointer}.sub{margin-top:12px;font-size:12px;color:#858099}.top{position:fixed;z-index:4;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}.top a,.top button{pointer-events:auto;color:#fff;background:#0b0a12cc;border:1px solid #ffffff24;border-radius:999px;padding:9px 13px;font:600 12px system-ui;text-decoration:none;cursor:pointer;backdrop-filter:blur(12px)}#hint{position:fixed;z-index:3;bottom:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 24px);padding:8px 13px;border-radius:999px;background:#0b0a12c9;color:#c6c1d7;font-size:12px;white-space:nowrap;pointer-events:none}#hint[hidden],#gate[hidden]{display:none}
+:root{color-scheme:dark;--bg:#0b0e0a;--panel:#131811;--panel2:#1b2319;--edge:#ffffff20;--muted:#a6b09d;--text:#f3f5ee;--accent:#c9f28b;--accentText:#18210f;--warning:#f3cb7c;--danger:#ff9d91}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:var(--bg);color:var(--text);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+body{overflow:hidden}
+button,a{font:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+[hidden],.hidden{display:none!important}
+#stage{position:fixed;inset:0;background:#080a07}
+#game{width:100%;height:100%;border:0;display:block;background:#080a07}
+#backdrop{position:fixed;inset:-7%;z-index:4;background:radial-gradient(ellipse at 70% 20%,#344b2bb5,transparent 43%),linear-gradient(135deg,#131b12,#090b08 75%);background-position:center;background-size:cover;filter:blur(24px) saturate(.78);transform:scale(1.08);opacity:.7}
+#backdrop:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#090b08ed 0%,#090b08aa 55%,#090b0899 100%)}
+#gate{position:fixed;inset:0;z-index:10;overflow:auto;display:flex;flex-direction:column;background:transparent}
+#gate:before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,#090b08b5,#090b08e8 90%)}
+.nav{width:min(1160px,100%);margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) clamp(16px,4vw,34px) 12px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:850;letter-spacing:.22em;color:#f3f5ee;text-decoration:none}
+.brand-mark{width:32px;height:32px;display:grid;place-items:center;border:1px solid #ffffff42;background:linear-gradient(140deg,#efffd8,#a9da76);color:#18210f;border-radius:9px;letter-spacing:0;font-size:16px;box-shadow:0 5px 20px #a9da762b}
+.nav-spacer{flex:1}
+.nav-tag{color:#b5c1ad;border:1px solid #ffffff21;background:#ffffff08;border-radius:999px;padding:6px 10px;font-size:10px;letter-spacing:.12em}
+.nav-link{border:1px solid #ffffff26;background:#ffffff09;border-radius:10px;padding:8px 12px;color:#f3f5ee;text-decoration:none;font-size:12px;white-space:nowrap}
+.content{width:min(1080px,100%);margin:auto;padding:clamp(10px,3vw,28px) clamp(14px,4vw,34px) 26px}
+.launch-card{--accent:#c9f28b;--accent-rgb:201,242,139;position:relative;display:grid;grid-template-columns:minmax(280px,.91fr) minmax(0,1.09fr);border:1px solid #ffffff26;border-radius:28px;background:linear-gradient(142deg,#182016f2,#10140ff5 66%);overflow:hidden;box-shadow:0 28px 95px #0008,0 1px #ffffff0a inset}
+.launch-card:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(520px circle at 88% 0%,rgba(var(--accent-rgb),.12),transparent 55%)}
+.art-column,.details{position:relative;z-index:1;min-width:0}
+.art-column{padding:18px;border-right:1px solid #ffffff12;display:flex;flex-direction:column;gap:12px}
+.art-frame{position:relative;min-height:330px;aspect-ratio:4/5;border-radius:19px;overflow:hidden;background:#20291c;border:1px solid #ffffff21;isolation:isolate}
+.art-frame:after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 40%,#080a07d9 100%),linear-gradient(135deg,rgba(var(--accent-rgb),.13),transparent 60%);pointer-events:none}
+.art-image{width:100%;height:100%;position:absolute;inset:0;object-fit:cover;display:block;image-rendering:auto;transition:transform .6s cubic-bezier(.2,.8,.2,1);background:#20291c}
+.art-frame:hover .art-image{transform:scale(1.025)}
+.art-topline{position:absolute;left:13px;right:13px;top:13px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:750;letter-spacing:.06em;border:1px solid #ffffff38;background:#0b0e0ad9;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.status-dot{width:6px;height:6px;border-radius:100%;background:#9ae88a;box-shadow:0 0 8px #9ae88a80;flex:none}
+.status-dot.dev{background:#f3cb7c;box-shadow:0 0 8px #f3cb7c80}
+.art-caption{position:absolute;left:16px;right:16px;bottom:16px;z-index:2}
+.art-caption .eyebrow{color:#d2e4c7;font-size:10px;letter-spacing:.2em;font-weight:800}
+.art-caption p{color:#edf2e8;font-size:13px;line-height:1.5;margin:7px 0 0;max-width:40ch;text-wrap:pretty}
+.art-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#aab4a2;font-size:10px;padding:0 3px}
+.art-foot span:last-child{white-space:nowrap}
+.details{padding:clamp(20px,3.2vw,36px);display:flex;flex-direction:column;align-items:stretch}
+.eyebrow{font:800 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;color:var(--accent);text-transform:uppercase}
+.title-row{display:flex;gap:14px;align-items:center;margin:12px 0 14px}
+.game-icon-shell{width:74px;height:74px;flex:none;border-radius:18px;border:1px solid #ffffff30;background:#20281b;overflow:hidden;box-shadow:0 8px 24px #0004}
+.game-icon{width:100%;height:100%;display:block;object-fit:cover;background:#20281b}
+h1{font-size:clamp(29px,4vw,47px);line-height:1.08;letter-spacing:-.045em;margin:0;overflow-wrap:anywhere}
+.english{font-size:10px;color:#a8b5a0;letter-spacing:.16em;margin-top:7px;text-transform:uppercase;overflow-wrap:anywhere}
+.tagline{font-size:14px;line-height:1.65;color:#e2e9da;margin:0 0 13px;max-width:60ch;text-wrap:pretty}
+.description{font-size:13px;line-height:1.78;color:#b9c4b1;margin:0 0 17px;white-space:pre-line;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px}
+.chip{font-size:10px;color:#d3ddcc;background:#ffffff08;border:1px solid #ffffff19;border-radius:7px;padding:5px 8px}
+.chip.accent{color:var(--accent);border-color:rgba(var(--accent-rgb),.25);background:rgba(var(--accent-rgb),.07)}
+.section{border-top:1px solid #ffffff16;padding-top:13px;margin-top:1px}
+.section h2{font-size:11px;letter-spacing:.08em;margin:0 0 9px;color:#eef3e8;font-weight:800}
+.item-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.info-item{display:flex;gap:8px;align-items:flex-start;border:1px solid #ffffff13;border-radius:10px;padding:9px;background:#ffffff05;min-width:0}
+.info-mark{width:21px;height:21px;flex:none;display:grid;place-items:center;border-radius:6px;background:rgba(var(--accent-rgb),.11);color:var(--accent);font-size:11px;font-weight:800}
+.info-item span{font-size:11px;line-height:1.45;color:#c3cebb;overflow-wrap:anywhere}
+.list{list-style:none;padding:0;margin:0;display:grid;gap:7px}
+.list li{position:relative;padding-left:17px;font-size:11px;line-height:1.6;color:#c1cbb9}
+.list li:before{content:"";position:absolute;left:1px;top:.62em;width:5px;height:5px;border-radius:2px;background:var(--accent);box-shadow:0 0 8px rgba(var(--accent-rgb),.3)}
+.launch-actions{display:flex;align-items:center;gap:9px;margin-top:auto;padding-top:22px}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:9px;border:1px solid transparent;border-radius:12px;padding:13px 15px;min-height:48px;font-weight:800;font-size:12px;text-decoration:none;transition:transform .16s,background .16s,border-color .16s;white-space:normal;text-align:center}
+.btn:active{transform:scale(.985)}
+.btn-primary{flex:1;background:var(--accent);color:var(--accentText);box-shadow:0 8px 22px rgba(var(--accent-rgb),.14)}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-secondary{background:#ffffff08;border-color:#ffffff26;color:#e9eee4}
+.btn-secondary:hover{background:#ffffff12;border-color:#ffffff46}
+.btn-icon{font-size:15px;line-height:1}
+.trust-note{display:flex;align-items:flex-start;gap:8px;color:#98a48f;font-size:10px;line-height:1.55;margin-top:13px}
+.trust-note .lock{color:var(--accent);font-size:12px}
+#hint{position:fixed;z-index:12;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);transform:translateX(-50%);max-width:calc(100% - 24px);padding:9px 13px;border:1px solid #ffffff25;border-radius:999px;background:#10140fe8;color:#d8e2d1;font-size:11px;white-space:normal;text-align:center;box-shadow:0 6px 25px #0005}
+.play-top{position:fixed;z-index:12;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.play-top a,.play-top button{pointer-events:auto;color:#fff;background:#0b0e0add;border:1px solid #ffffff27;border-radius:10px;padding:9px 12px;font-size:11px;font-weight:700;text-decoration:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#hint[hidden]{display:none}
+#loadingCard{width:min(450px,100%);padding:26px;text-align:center;border:1px solid #ffffff27;border-radius:22px;background:#11170ff2;box-shadow:0 24px 100px #0009;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.spinner{width:34px;height:34px;margin:0 auto 16px;border:3px solid #ffffff22;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loadingTitle{font-size:22px;font-weight:850;letter-spacing:-.025em;margin:0 0 8px}
+#loadingMessage{font-size:12px;color:#aab6a2;margin:0 0 16px}
+.load-actions{display:flex;gap:8px}.load-actions .btn{flex:1}
+@media(max-width:760px){
+ #gate{display:block}
+ .nav{padding-top:calc(env(safe-area-inset-top,0px) + 10px)}
+ .nav-tag{display:none}
+ .content{padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 20px)}
+ .launch-card{grid-template-columns:1fr;border-radius:21px}
+ .art-column{padding:11px 11px 0;border-right:0}
+ .art-frame{min-height:0;aspect-ratio:16/8;border-radius:14px}
+ .art-image{object-position:center 42%}
+ .art-caption{left:12px;right:12px;bottom:11px}
+ .art-caption p{font-size:11px;margin-top:4px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+ .art-topline{left:9px;right:9px;top:9px}
+ .art-foot{font-size:9px;padding:0 4px}
+ .details{padding:18px 16px 17px}
+ .title-row{gap:11px;margin:9px 0 11px}
+ .game-icon-shell{width:58px;height:58px;border-radius:14px}
+ h1{font-size:clamp(27px,7vw,36px)}
+ .english{font-size:9px}
+ .tagline{font-size:13px;margin-bottom:9px}
+ .description{font-size:12px;line-height:1.68;margin-bottom:12px}
+ .chips{margin-bottom:12px}
+ .item-grid{grid-template-columns:1fr 1fr}
+ .section{padding-top:10px}
+ .launch-actions{padding-top:15px}
+ .btn{min-height:46px;padding:12px 10px}
+}
+@media(max-width:420px){
+ .nav{gap:8px}.brand{letter-spacing:.15em}.brand-mark{width:29px;height:29px}
+ .nav-link{padding:7px 9px;font-size:11px}
+ .content{padding-left:9px;padding-right:9px}
+ .art-frame{aspect-ratio:16/7.7}
+ .details{padding:15px 13px}
+ .game-icon-shell{width:52px;height:52px}
+ h1{font-size:27px}
+ .item-grid{grid-template-columns:1fr}
+ .launch-actions{gap:7px}
+ .launch-actions .btn-secondary{max-width:42%}
+}
+@media(max-height:730px) and (min-width:761px){
+ #gate{overflow-y:auto}
+ .content{padding-top:5px;padding-bottom:12px}
+ .art-frame{min-height:260px}
+ .art-column{padding:13px}
+ .details{padding:20px}
+ .description{margin-bottom:10px}
+ .launch-actions{padding-top:12px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-<div id="stage"><iframe id="game" title="游戏画面" allow="fullscreen; autoplay; gamepad; clipboard-read; clipboard-write; xr-spatial-tracking" allowfullscreen></iframe></div>
-<div class="top"><a href="./">← 返回游戏库</a><button id="fs" type="button">⛶ 全屏</button></div>
-<div id="hint" hidden>按 Esc 可退出全屏 · 手机请横屏体验</div>
-<div id="gate"><div class="panel"><h1 id="title">正在启动游戏</h1><p>点击开始后将尝试进入全屏模式。若浏览器不允许自动全屏，可使用右上角按钮。</p><button class="btn" id="start" type="button">开始游戏 · 全屏体验 ↗</button><div class="sub">全屏功能受浏览器权限限制；部分手机浏览器可能不支持。</div></div></div>
+<div id="stage"><iframe id="game" title="游戏画面" allow="fullscreen; autoplay; gamepad; clipboard-read; clipboard-write; xr-spatial-tracking; camera; microphone" allowfullscreen></iframe></div>
+<div id="backdrop" aria-hidden="true"></div>
+<div class="play-top" id="playTop" hidden>
+  <a href="./">← 返回游戏库</a>
+  <button id="fullscreenToggle" type="button">⛶ 全屏</button>
+</div>
+<div id="hint" hidden>正在进入游戏…</div>
+<main id="gate" role="dialog" aria-modal="true" aria-labelledby="gameName">
+  <header class="nav">
+    <a class="brand" href="./" aria-label="返回 GHOST 游戏库"><span class="brand-mark">G</span><span>GHOST <span style="font-weight:450;color:#a6b09d">/ GAME LIBRARY</span></span></a>
+    <span class="nav-spacer"></span>
+    <span class="nav-tag">GAME BRIEFING · 启动前导览</span>
+    <a class="nav-link" href="./">返回游戏库 ↗</a>
+  </header>
+  <div class="content" id="launchContent">
+    <section class="launch-card" id="launchCard">
+      <div class="art-column">
+        <div class="art-frame">
+          <img id="coverImage" class="art-image" alt="" decoding="async">
+          <div class="art-topline">
+            <span class="pill"><span id="statusDot" class="status-dot"></span><span id="gameStatus">准备就绪</span></span>
+            <span id="orientationPill" class="pill hidden"></span>
+          </div>
+          <div class="art-caption">
+            <div class="eyebrow">YOUR NEXT EXPERIENCE</div>
+            <p id="coverTagline">准备好开始这段体验了吗？</p>
+          </div>
+        </div>
+        <div class="art-foot"><span>GHOST · GAME LIBRARY</span><span id="addedLabel"></span></div>
+      </div>
+      <div class="details">
+        <div class="eyebrow" id="briefingEyebrow">GAME BRIEFING / 进入前先了解</div>
+        <div class="title-row">
+          <div class="game-icon-shell"><img id="gameIcon" class="game-icon" alt="" decoding="async"></div>
+          <div style="min-width:0">
+            <h1 id="gameName">正在读取游戏…</h1>
+            <div id="gameEnglish" class="english"></div>
+          </div>
+        </div>
+        <p id="tagline" class="tagline hidden"></p>
+        <p id="description" class="description">正在读取游戏简介…</p>
+        <div id="chips" class="chips"></div>
+        <section id="featuresSection" class="section hidden">
+          <h2>这款游戏有什么</h2>
+          <div id="features" class="item-grid"></div>
+        </section>
+        <section id="controlsSection" class="section hidden">
+          <h2>如何开始 / 操作方式</h2>
+          <ul id="controls" class="list"></ul>
+        </section>
+        <section id="requirementsSection" class="section hidden">
+          <h2>进入前确认</h2>
+          <ul id="requirements" class="list"></ul>
+        </section>
+        <section id="tipsSection" class="section hidden">
+          <h2>小提示</h2>
+          <ul id="tips" class="list"></ul>
+        </section>
+        <div class="launch-actions">
+          <a id="cancel" class="btn btn-secondary" href="./">先逛逛</a>
+          <button id="start" class="btn btn-primary" type="button"><span class="btn-icon">↗</span><span>开始游戏 · 尝试全屏</span></button>
+        </div>
+        <div class="trust-note"><span class="lock">✦</span><span id="trustNote">点击开始后，GHOST 会尝试进入全屏；浏览器若不允许，也可以继续以窗口模式游玩。</span></div>
+      </div>
+    </section>
+  </div>
+</main>
+<div id="loadingGate" class="hidden" style="position:fixed;inset:0;z-index:11;display:grid;place-items:center;padding:20px;background:#080b07cc;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
+  <section id="loadingCard">
+    <div class="spinner" aria-hidden="true"></div>
+    <h2 id="loadingTitle">正在进入游戏…</h2>
+    <p id="loadingMessage">正在加载游戏文件和启动场景。</p>
+    <div id="loadWarning" class="hidden" style="border:1px solid #8f7945;background:#4b3b1f40;border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;color:#f2dca9;text-align:left">加载时间比预期长。可能是网络或游戏资源较大；你可以继续等待，也可以重新尝试。</div>
+    <div class="load-actions">
+      <button id="continueLoad" class="btn btn-secondary hidden" type="button">继续进入</button>
+      <button id="retryLoad" class="btn btn-primary hidden" type="button">重新加载</button>
+    </div>
+  </section>
+</div>
 <script>
-(async()=>{
-const $=s=>document.querySelector(s),params=new URLSearchParams(location.search),path=params.get("game");
-if(!path||!/^(games|roulette)\//.test(path)||path.includes("..")){$("#title").textContent="无效的游戏地址";$("#start").textContent="返回游戏库";$("#start").onclick=()=>location.href="./";return}
-let meta={name:"GHOST 游戏"};
-try{meta=await(await fetch(encodeURI(path)+"/meta.json",{cache:"no-cache"})).json()}catch(e){}
-document.title=meta.name+" · GHOST";$("#title").textContent=meta.name||"开始游戏";
-const frame=$("#game"),gate=$("#gate"),hint=$("#hint");
-async function goFullscreen(){try{if(!document.fullscreenElement)await $("#stage").requestFullscreen({navigationUI:"hide"});return !!document.fullscreenElement}catch(e){return false}}
-$("#start").addEventListener("click",async()=>{
-gate.hidden=true;frame.src=encodeURI(path)+"/";
-const ok=await goFullscreen();hint.hidden=false;
-if(!ok){hint.textContent="浏览器未允许全屏；点击右上角「全屏」即可尝试";}
+(async function(){
+"use strict";
+var $=function(selector){return document.querySelector(selector);};
+var params=new URLSearchParams(location.search);
+var path=params.get("game");
+var frame=$("#game"),stage=$("#stage"),gate=$("#gate"),loadingGate=$("#loadingGate"),hint=$("#hint");
+var meta={},library={},started=false,loaded=false,loadTimer=null,fullscreenFailed=false,loadingTimedOut=false;
+function safePath(value){
+ if(!value||value.indexOf("..")!==-1||value.indexOf("\\")!==-1||value.charAt(0)==="/"||! /^(games|roulette)\/[^/]+$/.test(value))return false;
+ return true;
+}
+function cleanString(value){return typeof value==="string"?value.trim():"";}
+function normalList(value){
+ if(value==null)return [];
+ if(Array.isArray(value))return value.map(function(item){
+  if(typeof item==="string")return item.trim();
+  if(item&&typeof item==="object")return cleanString(item.label||item.title||item.name)+(item.description||item.detail?" — "+cleanString(item.description||item.detail):"");
+  return "";
+ }).filter(Boolean);
+ if(typeof value==="string")return value.split(/\r?\n/).map(function(item){return item.trim();}).filter(Boolean);
+ if(typeof value==="object")return Object.keys(value).map(function(key){return key+" — "+String(value[key]);});
+ return [];
+}
+function joinedAsset(value){
+ if(Array.isArray(value))return value.join("");
+ if(typeof value==="string")return value.trim();
+ return "";
+}
+function resolveImage(value){
+ var raw=joinedAsset(value);
+ if(!raw)return "";
+ if(/^data:image\/(?:png|jpeg|jpg|webp|gif|svg\+xml|avif);/i.test(raw)||/^https?:\/\//i.test(raw)||/^blob:/i.test(raw))return raw;
+ try{return new URL(raw,new URL("./",location.href)).href;}catch(e){return "";}
+}
+function decodePathName(value){
+ var part=(value||"").split("/").pop()||"GHOST 游戏";
+ try{return decodeURIComponent(part).replace(/[-_]+/g," ");}catch(e){return part.replace(/[-_]+/g," ");}
+}
+function makeNode(tag,className,text){
+ var node=document.createElement(tag);
+ if(className)node.className=className;
+ if(text!==undefined)node.textContent=text;
+ return node;
+}
+function renderList(target,items){
+ target.innerHTML="";
+ items.forEach(function(item){target.appendChild(makeNode("li","",item));});
+}
+function showSection(sectionId,listId,items){
+ var section=$("#"+sectionId),target=$("#"+listId);
+ if(!items.length){section.classList.add("hidden");return;}
+ renderList(target,items);section.classList.remove("hidden");
+}
+function renderFeatures(items){
+ var section=$("#featuresSection"),target=$("#features");
+ target.innerHTML="";
+ if(!items.length){section.classList.add("hidden");return;}
+ items.slice(0,6).forEach(function(item,index){
+  var row=makeNode("div","info-item"),mark=makeNode("span","info-mark",String(index+1).padStart(2,"0")),text=makeNode("span","",item);
+  row.append(mark,text);target.appendChild(row);
+ });
+ section.classList.remove("hidden");
+}
+function getDetails(){
+ var launch=meta.launch&&typeof meta.launch==="object"?meta.launch:{};
+ var fullDesc=cleanString(launch.fullDescription||launch.description||meta.fullDesc||meta.longDesc||meta.description||meta.desc);
+ var cover=resolveImage(launch.cover||meta.cover||meta.artwork);
+ var icon=resolveImage(launch.icon||meta.icon||meta.logo||meta.gameIcon)||cover;
+ var features=normalList(launch.features||launch.highlights||meta.features||meta.highlights);
+ var controls=normalList(launch.controls||meta.controls||meta.howToPlay);
+ var requirements=normalList(launch.requirements||meta.requirements);
+ var tips=normalList(launch.tips||meta.tips||meta.launchTips);
+ var tagline=cleanString(launch.tagline||meta.tagline||meta.subtitle);
+ var orientation=cleanString(launch.orientation||meta.orientation);
+ return {launch:launch,fullDesc:fullDesc,cover:cover,icon:icon,features:features,controls:controls,requirements:requirements,tips:tips,tagline:tagline,orientation:orientation};
+}
+function colorTheme(value){
+ if(typeof value!=="string"||!/^#[0-9a-f]{6}$/i.test(value))return "#c9f28b";
+ return value;
+}
+function rgbTriplet(hex){
+ return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)].join(",");
+}
+function applyTheme(hex){
+ document.documentElement.style.setProperty("--accent",hex);
+ document.documentElement.style.setProperty("--accent-rgb",rgbTriplet(hex));
+ var brightness=(parseInt(hex.slice(1,3),16)*299+parseInt(hex.slice(3,5),16)*587+parseInt(hex.slice(5,7),16)*114)/1000;
+ document.documentElement.style.setProperty("--accentText",brightness>165?"#151b10":"#ffffff");
+ $("#launchCard").style.setProperty("--accent",hex);
+ $("#launchCard").style.setProperty("--accent-rgb",rgbTriplet(hex));
+}
+function tagLabel(tag){
+ var table=library.tags||{};
+ return table[tag]||String(tag).replace(/[_-]+/g," ");
+}
+function renderChips(){
+ var target=$("#chips");target.innerHTML="";
+ var status=cleanString(meta.status)||"可玩";
+ var statusChip=makeNode("span","chip accent",status);
+ target.appendChild(statusChip);
+ normalList(meta.platform).forEach(function(platform){target.appendChild(makeNode("span","chip",platform));});
+ normalList(meta.tags).forEach(function(tag){target.appendChild(makeNode("span","chip",tagLabel(tag)));});
+ if(meta.genre)target.appendChild(makeNode("span","chip",meta.genre));
+ if(meta.orientation||meta.launch&&meta.launch.orientation) {
+  var orientation=cleanString(meta.orientation||(meta.launch&&meta.launch.orientation));
+  var text=orientation==="landscape"?"建议横屏":orientation==="portrait"?"建议竖屏":orientation;
+  if(text)target.appendChild(makeNode("span","chip",text));
+ }
+}
+function render(){
+ var name=cleanString(meta.name)||decodePathName(path);
+ var english=cleanString(meta.en||meta.englishName);
+ var status=cleanString(meta.status)||"可玩";
+ var detail=getDetails();
+ var cover=detail.cover,icon=detail.icon;
+ document.title=name+" · GHOST";
+ $("#gameName").textContent=name;
+ $("#gameEnglish").textContent=english;
+ $("#gameEnglish").classList.toggle("hidden",!english);
+ $("#gameStatus").textContent=status;
+ $("#statusDot").classList.toggle("dev",/开发|测试|实验|beta|coming/i.test(status));
+ $("#coverTagline").textContent=detail.tagline||detail.fullDesc||"准备好开始这段体验了吗？";
+ $("#description").textContent=detail.fullDesc||"这款游戏尚未提供详细简介。进入后请按照游戏内提示操作。";
+ $("#tagline").textContent=detail.tagline;
+ $("#tagline").classList.toggle("hidden",!detail.tagline);
+ var iconEl=$("#gameIcon"),coverEl=$("#coverImage");
+ iconEl.onerror=function(){iconEl.onerror=null;if(cover&&iconEl.src!==cover)iconEl.src=cover;else iconEl.style.visibility="hidden";};
+ coverEl.onerror=function(){coverEl.style.visibility="hidden";};
+ if(icon)iconEl.src=icon;else iconEl.style.visibility="hidden";
+ if(cover){coverEl.src=cover;$("#backdrop").style.backgroundImage="radial-gradient(ellipse at 60% 10%,#2f472b88,transparent 58%),linear-gradient(90deg,#090b08ed,#090b08b0),url(\""+cover.replace(/"/g,"%22")+"\")";}
+ else{$("#backdrop").style.backgroundImage="radial-gradient(ellipse at 70% 20%,#344b2bb5,transparent 43%),linear-gradient(135deg,#131b12,#090b08 75%)";coverEl.style.visibility="hidden";}
+ $("#addedLabel").textContent=cleanString(meta.added)?"ADDED · "+meta.added:"";
+ var orientation=detail.orientation;
+ if(orientation){$("#orientationPill").textContent=orientation==="landscape"?"横屏体验":orientation==="portrait"?"竖屏体验":orientation;$("#orientationPill").classList.remove("hidden");}
+ else $("#orientationPill").classList.add("hidden");
+ var accent=colorTheme(detail.launch.accent||meta.accent);
+ applyTheme(accent);
+ renderChips();renderFeatures(detail.features);
+ showSection("controlsSection","controls",detail.controls.length?detail.controls:["进入游戏后按照游戏内提示操作。"]);
+ showSection("requirementsSection","requirements",detail.requirements);
+ showSection("tipsSection","tips",detail.tips);
+ var trust=[];
+ if(detail.orientation==="landscape")trust.push("建议横屏");
+ if(detail.orientation==="portrait")trust.push("建议竖屏");
+ $("#trustNote").textContent=(trust.length?trust.join(" · ")+"。":"")+"点击开始后，GHOST 会尝试进入全屏；浏览器若不允许，也可以继续以窗口模式游玩。";
+}
+async function loadMetadata(){
+ if(!safePath(path)){
+  $("#gameName").textContent="无效的游戏地址";
+  $("#gameEnglish").textContent="INVALID GAME PATH";
+  $("#description").textContent="游戏路径不合法。请返回游戏库重新选择游戏。";
+  $("#coverTagline").textContent="为了安全，GHOST 没有打开这个地址。";
+  $("#start").disabled=true;
+  $("#start").textContent="无法启动";
+  return false;
+ }
+ var urls=[new URL(encodeURIComponent(path.split("/")[0])+"/"+path.split("/").slice(1).map(encodeURIComponent).join("/")+"/meta.json",new URL("./",location.href)).href,new URL("games.json",new URL("./",location.href)).href];
+ var responses=await Promise.allSettled(urls.map(function(url){return fetch(url,{cache:"no-cache"}).then(function(response){if(!response.ok)throw new Error("HTTP "+response.status);return response.json();});}));
+ if(responses[0].status==="fulfilled"&&responses[0].value&&typeof responses[0].value==="object")meta=responses[0].value;
+ else meta={name:decodePathName(path),desc:"暂时无法读取这款游戏的详情资料。你仍可以尝试进入游戏；如果游戏不能启动，请返回游戏库稍后重试。",status:"详情暂不可用"};
+ if(responses[1].status==="fulfilled"&&responses[1].value)library=responses[1].value;
+ render();return true;
+}
+function requestFullscreen(){
+ try{
+  if(document.fullscreenElement)return Promise.resolve(true);
+  var request=stage.requestFullscreen||stage.webkitRequestFullscreen;
+  if(!request)return Promise.resolve(false);
+  return Promise.resolve(request.call(stage,{navigationUI:"hide"})).then(function(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}).catch(function(){return false;});
+ }catch(e){return Promise.resolve(false);}
+}
+function updateFullscreenButton(){
+ var on=!!(document.fullscreenElement||document.webkitFullscreenElement);
+ $("#fullscreenToggle").textContent=on?"⤢ 退出全屏":"⛶ 全屏";
+}
+function showPlayingHint(){
+ hint.hidden=false;
+ hint.textContent=fullscreenFailed?"游戏已打开，但浏览器未允许全屏。点击右上角「全屏」再试一次。":(meta.orientation==="landscape"||meta.launch&&meta.launch.orientation==="landscape"?"游戏已打开 · 建议横屏":"游戏已打开 · 按游戏内提示开始");
+}
+function finishLoading(){
+ if(loaded)return;loaded=true;
+ clearTimeout(loadTimer);loadTimer=null;
+ loadingGate.classList.add("hidden");gate.hidden=true;$("#playTop").hidden=false;
+ showPlayingHint();
+}
+function startGame(useFullscreen){
+ if(started)return;
+ started=true;loaded=false;loadingTimedOut=false;
+ $("#start").disabled=true;
+ $("#start").innerHTML="<span class=\"btn-icon\">…</span><span>正在启动</span>";
+ gate.hidden=true;loadingGate.classList.remove("hidden");$("#playTop").hidden=true;
+ $("#loadingTitle").textContent="正在进入「"+(meta.name||decodePathName(path))+"」";
+ $("#loadingMessage").textContent="正在加载游戏页面与场景。首次进入可能需要一点时间。";
+ var fsPromise=useFullscreen?requestFullscreen():Promise.resolve(false);
+ fsPromise.then(function(ok){fullscreenFailed=useFullscreen&&!ok;});
+ frame.onload=function(){finishLoading();};
+ frame.onerror=function(){
+  $("#loadingTitle").textContent="游戏页面未能加载";
+  $("#loadingMessage").textContent="请检查网络连接，或返回游戏库重新打开。";
+  $("#retryLoad").classList.remove("hidden");
+ };
+ var encodedPath=path.split("/").map(function(part){return encodeURIComponent(part);}).join("/");
+ frame.src=encodedPath+"/";
+ loadTimer=setTimeout(function(){
+  if(loaded)return;
+  loadingTimedOut=true;
+  $("#loadingTitle").textContent="游戏还在加载";
+  $("#loadingMessage").textContent="这款游戏可能需要较长时间初始化。你可以继续等待，或者重新加载。";
+  $("#loadWarning").classList.remove("hidden");
+  $("#continueLoad").classList.remove("hidden");
+  $("#retryLoad").classList.remove("hidden");
+ },18000);
+}
+function retryGame(){
+ loaded=false;loadingTimedOut=false;
+ $("#loadWarning").classList.add("hidden");$("#continueLoad").classList.add("hidden");$("#retryLoad").classList.add("hidden");
+ $("#loadingTitle").textContent="正在重新加载游戏…";$("#loadingMessage").textContent="正在重新请求游戏入口。";
+ try{frame.src=frame.src;}catch(e){}
+ clearTimeout(loadTimer);
+ loadTimer=setTimeout(function(){
+  if(loaded)return;
+  $("#loadingTitle").textContent="游戏还在加载";
+  $("#loadingMessage").textContent="如果网络较慢，可以继续等待；也可以返回游戏库。";
+  $("#continueLoad").classList.remove("hidden");$("#retryLoad").classList.remove("hidden");
+ },18000);
+}
+$("#start").addEventListener("click",function(){startGame(true);});
+$("#continueLoad").addEventListener("click",function(){finishLoading();});
+$("#retryLoad").addEventListener("click",retryGame);
+$("#fullscreenToggle").addEventListener("click",function(){
+ if(document.fullscreenElement||document.webkitFullscreenElement){
+  var exit=document.exitFullscreen||document.webkitExitFullscreen;if(exit)Promise.resolve(exit.call(document)).catch(function(){});
+ }else{requestFullscreen().then(function(ok){fullscreenFailed=!ok;if(!ok){hint.hidden=false;hint.textContent="全屏暂不可用；可继续在窗口模式游玩。";}});}
 });
-$("#fs").addEventListener("click",async()=>{if(document.fullscreenElement){try{await document.exitFullscreen()}catch(e){}}else{const ok=await goFullscreen();hint.hidden=false;if(!ok)hint.textContent="此浏览器不支持全屏或未授权，请使用支持全屏的浏览器";}});
-document.addEventListener("fullscreenchange",()=>{$("#fs").textContent=document.fullscreenElement?"⤢ 退出全屏":"⛶ 全屏";});
+document.addEventListener("fullscreenchange",updateFullscreenButton);
+document.addEventListener("webkitfullscreenchange",updateFullscreenButton);
+loadMetadata();
 })();
 </script>
 </body>

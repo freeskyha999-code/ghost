@@ -2,13 +2,16 @@
   "tags": {
     "horror": "恐怖氛围",
     "strategy": "策略对抗",
-    "story": "叙事沙盒"
+    "story": "叙事沙盒",
+    "sandbox": "方块沙盒",
+    "ar": "增强现实"
   },
   "games": [
     "games/abandoned-park",
     "roulette/恶魔轮盘",
     "games/捉鬼",
     "games/blockstory",
-    "games/sneaky-lunch"
+    "games/sneaky-lunch",
+    "games/ar-blockworld"
   ]
 }

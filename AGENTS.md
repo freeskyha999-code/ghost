@@ -9,3 +9,6 @@
 3. 封面图（base64）绝不手抄，用脚本生成；推送后必须回读比对。
 
 新增游戏的完整步骤、`meta.json` 字段说明和检查清单都在 `README.md`。
+
+
+统一启动页的元数据字段、全屏降级、加载状态与新游戏接入方式，见 `docs/game-launcher-architecture.md`。

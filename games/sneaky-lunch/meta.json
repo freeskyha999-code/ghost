@@ -12,5 +12,29 @@
   ],
   "cover": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22640%22%20height%3D%22400%22%20viewBox%3D%220%200%20640%20400%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2311141c%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23292a31%22%2F%3E%3C%2FlinearGradient%3E%3CradialGradient%20id%3D%22glow%22%3E%3Cstop%20stop-color%3D%22%23d7f58b%22%20stop-opacity%3D%22.3%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23d7f58b%22%20stop-opacity%3D%220%22%2F%3E%3C%2FradialGradient%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%20stop-opacity%3D%22.12%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%22.015%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22640%22%20height%3D%22400%22%20fill%3D%22url(%23bg)%22%2F%3E%3Ccircle%20cx%3D%22445%22%20cy%3D%22183%22%20r%3D%22240%22%20fill%3D%22url(%23glow)%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23f4f0e8%22%20stroke-opacity%3D%22.22%22%3E%3Cpath%20d%3D%22M26%2046V26H46M594%2026h20v20M26%20354v20h20M594%20374h20v-20%22%2F%3E%3Ccircle%20cx%3D%22440%22%20cy%3D%22154%22%20r%3D%2298%22%2F%3E%3Ccircle%20cx%3D%22440%22%20cy%3D%22154%22%20r%3D%22112%22%20stroke-dasharray%3D%222%209%22%2F%3E%3Cpath%20d%3D%22M300%20154h280M440%2014v280%22%20stroke-opacity%3D%22.12%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(440%20154)%22%3E%3Cpath%20d%3D%22M-49%20-32Q-72%20-56%20-60%20-91Q-19%20-126%2026%20-91Q63%20-70%2048%20-30L41%208L-42%208Z%22%20fill%3D%22%23171820%22%20stroke%3D%22%23aeb0a9%22%20stroke-opacity%3D%22.6%22%20stroke-width%3D%222%22%2F%3E%3Cellipse%20cx%3D%220%22%20cy%3D%22-23%22%20rx%3D%2245%22%20ry%3D%2254%22%20fill%3D%22%23aa7e6a%22%2F%3E%3Cpath%20d%3D%22M-46%20-25Q-61%20-73%20-26%20-87Q13%20-109%2041%20-72Q57%20-54%2045%20-19L26%20-44Q-9%20-31%20-25%20-51Z%22%20fill%3D%22%23171820%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23d7f58b%22%20stroke-width%3D%223%22%3E%3Crect%20x%3D%22-29%22%20y%3D%22-32%22%20width%3D%2224%22%20height%3D%2217%22%20rx%3D%224%22%2F%3E%3Crect%20x%3D%227%22%20y%3D%22-32%22%20width%3D%2224%22%20height%3D%2217%22%20rx%3D%224%22%2F%3E%3Cpath%20d%3D%22M-5%20-24H7%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M-12%204q12%209%2024%200%22%20fill%3D%22none%22%20stroke%3D%22%2349282c%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20d%3D%22M-79%20135Q-74%2060%20-36%2045L0%2062L36%2045Q74%2060%2079%20135Z%22%20fill%3D%22%23191c24%22%20stroke%3D%22%239d9c95%22%20stroke-opacity%3D%22.35%22%2F%3E%3Cpath%20d%3D%22M-19%2050L0%2073L18%2050L10%20113H-10Z%22%20fill%3D%22%23d7d1bf%22%2F%3E%3Cpath%20d%3D%22M0%2070L13%2082L6%20111L0%20120L-6%20111L-13%2082Z%22%20fill%3D%22%237d303f%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(58%2065)%22%3E%3Ctext%20x%3D%220%22%20y%3D%220%22%20fill%3D%22%23d7f58b%22%20font-family%3D%22monospace%22%20font-size%3D%2211%22%20letter-spacing%3D%223%22%3EGHOST%20%2F%20CAMERA%20GAME%3C%2Ftext%3E%3Ctext%20x%3D%220%22%20y%3D%2275%22%20fill%3D%22%23f4f0e8%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2252%22%20font-weight%3D%22700%22%20letter-spacing%3D%22-2%22%3ESNEAKY%3C%2Ftext%3E%3Ctext%20x%3D%220%22%20y%3D%22127%22%20fill%3D%22%23f4f0e8%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2252%22%20font-weight%3D%22700%22%20letter-spacing%3D%22-2%22%3ELUNCH%3C%2Ftext%3E%3Cpath%20d%3D%22M0%20154H166%22%20stroke%3D%22%23d7f58b%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%220%22%20y%3D%22183%22%20fill%3D%22%23c4c1b7%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2214%22%3E%E8%80%81%E5%B8%88%E5%9B%9E%E5%A4%B4%E4%BA%86%E3%80%82%3C%2Ftext%3E%3Ctext%20x%3D%220%22%20y%3D%22216%22%20fill%3D%22%2396969b%22%20font-family%3D%22monospace%22%20font-size%3D%2210%22%20letter-spacing%3D%221.4%22%3EFACE%20TRACKING%20%2F%20NO%20BUTTONS%3C%2Ftext%3E%3C%2Fg%3E%3Crect%20x%3D%2214%22%20y%3D%2214%22%20width%3D%22612%22%20height%3D%22372%22%20rx%3D%224%22%20fill%3D%22url(%23glass)%22%20stroke%3D%22%23fff%22%20stroke-opacity%3D%22.12%22%2F%3E%3C%2Fsvg%3E",
   "added": "2026-10-16",
-  "featured": false
+  "featured": false,
+  "launch": {
+    "accent": "#f0cb73",
+    "tagline": "别被老师发现——用表情和动作完成挑战",
+    "description": "《老师回头了！》是一款使用实时摄像头与面部动作识别的潜行体验。玩家通过转头选择食物、张嘴进食，并快速左右摆头擦去痕迹，整个过程以自然的头部和面部动作代替传统按钮。游戏需要摄像头持续看到你的脸；面部处理在当前浏览器本地进行，不上传摄像头视频。",
+    "features": [
+      "基于实时摄像头的互动体验",
+      "转头选择食物，张嘴完成进食",
+      "快速左右摆头擦去痕迹",
+      "使用自然动作代替传统按钮"
+    ],
+    "controls": [
+      "在 HTTPS 页面打开游戏，并允许浏览器使用摄像头。",
+      "保持脸部处于镜头画面中，按游戏提示移动头部。",
+      "转头选择食物、张嘴进食，并按提示左右摆头。"
+    ],
+    "requirements": [
+      "需要摄像头权限；请从 HTTPS 网页访问。",
+      "需要清晰看到脸部的光线与摄像头位置。"
+    ],
+    "tips": [
+      "把手机或摄像头放稳，使脸部保持在画面中央。",
+      "如果提示无法识别面部，请调整距离和光线后再试。"
+    ]
+  }
 }

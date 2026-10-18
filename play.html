@@ -398,7 +398,7 @@ function showPlayingHint(){
 function finishLoading(){
  if(loaded)return;loaded=true;
  clearTimeout(loadTimer);loadTimer=null;
- loadingGate.classList.add("hidden");gate.hidden=true;$("#playTop").hidden=false;
+ loadingGate.classList.add("hidden");gate.hidden=true;$("#backdrop").classList.add("hidden");$("#playTop").hidden=false;
  showPlayingHint();
 }
 function startGame(useFullscreen){

@@ -337,7 +337,7 @@ function render(){
  $("#gameEnglish").classList.toggle("hidden",!english);
  $("#gameStatus").textContent=status;
  $("#statusDot").classList.toggle("dev",/开发|测试|实验|beta|coming/i.test(status));
- $("#coverTagline").textContent=detail.tagline||detail.fullDesc||"准备好开始这段体验了吗？";
+ var coverCaption=detail.tagline||detail.fullDesc||"准备好开始这段体验了吗？";if(!detail.tagline&&coverCaption.length>96)coverCaption=coverCaption.slice(0,95)+"…";$("#coverTagline").textContent=coverCaption;
  $("#description").textContent=detail.fullDesc||"这款游戏尚未提供详细简介。进入后请按照游戏内提示操作。";
  $("#tagline").textContent=detail.tagline;
  $("#tagline").classList.toggle("hidden",!detail.tagline);

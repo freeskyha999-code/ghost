@@ -1,0 +1,10 @@
+const fs = require('fs');
+const f = 'E:\\game\\恶魔轮盘\\src\\js\\game.js';
+let s = fs.readFileSync(f, 'latin1');
+const ind = ' '.repeat(24);
+const c1 = s.split('\n$1const _oldPm').length - 1, c2 = s.split("\n$1model.name = side + '_pacemaker';").length - 1;
+if (c1 !== 1 || c2 !== 1) throw new Error('unexpected counts ' + c1 + ' ' + c2);
+s = s.replace('\n$1const _oldPm', () => '\n' + ind + 'const _oldPm');
+s = s.replace("\n$1model.name = side + '_pacemaker';", () => '\n' + ind + "model.name = side + '_pacemaker';");
+fs.writeFileSync(f, s, 'latin1');
+console.log('fixed indentation placeholders');

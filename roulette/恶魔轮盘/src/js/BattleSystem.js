@@ -334,11 +334,14 @@ class BattleSystem {
         const pickItem = (isPlayer) => {
             const hp = isPlayer ? this.playerHp : this.enemyHp;
             const alreadyHas = isPlayer ? this.playerPacemaker : this.enemyPacemaker;
+            const heldDefib = (isPlayer ? this.playerItems : this.enemyItems).some(i => i.id === 'defibrillator');
+            const pDefib = hp <= 1 ? 0.30 : hp <= 2 ? 0.18 : 0.10;
+            if (!alreadyHas && !heldDefib && Math.random() < pDefib) { const dd = this.itemPool.find(i => i.id === 'defibrillator'); if (dd) return { ...dd }; }
             for (let attempt = 0; attempt < 20; attempt++) {
                 const c = this.itemPool[Math.floor(Math.random() * this.itemPool.length)];
                 if (c.id === 'defibrillator') {
                     if (alreadyHas) continue;
-                    const chance = hp <= 1 ? 0.25 : hp <= 2 ? 0.12 : 0.06;
+                    const chance = 0;
                     if (Math.random() > chance) continue;
                 }
                 return { ...c };

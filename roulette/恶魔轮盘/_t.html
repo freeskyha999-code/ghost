@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Buckshot Roulette - 自检模式</title>
+    <link rel="stylesheet" href="src/css/style.css">
+    <script src="node_modules/three/build/three.min.js"></script>
+    <script src="node_modules/peerjs/dist/peerjs.min.js"></script>
+    <script src="src/js/models.js"></script>
+</head>
+<body>
+    <div id="webgl-container"></div>
+    <div class="scanlines"></div>
+    <div id="damage-overlay"></div>
+    <div class="blood-splatter" id="blood-splatter"></div>
+
+    <div id="opening-overlay">
+        <div id="opening-skip-hint">长按空格跳过</div>
+        <div id="opening-click-hint">点击那扇门</div>
+    </div>
+
+    <div id="ui-layer">
+        <!-- 主菜单 -->
+        <div id="menu-screen" class="screen">
+            <h1>BASEMENT ECHOES<br><span style="font-size:1rem;color:#555">区域核心全网协议 v5.0</span></h1>
+            <div id="main-menu" class="sub-menu">
+                <button class="btn" id="btn-sp">开始 (单机)</button>
+                <button class="btn" id="btn-multiplayer">多人</button>
+                <button class="btn" id="btn-peer">P2P 联机 (PeerJS)</button>
+                <button class="btn btn-small" id="btn-settings-toggle" style="border:1px solid #555; margin-top:5px;">设置</button>
+            </div>
+            <div id="multiplayer-menu" class="sub-menu hidden">
+                <div class="multiplayer-layout">
+                    <div class="lobby-panel">
+                        <div id="lobby-list"></div>
+                    </div>
+                    <div class="multiplayer-actions">
+                        <div class="setting-row">
+                            <span>玩家名称</span>
+                            <input type="text" id="player-name-input" placeholder="玩家名称" maxlength="12">
+                        </div>
+                        <div class="setting-row">
+                            <span>服务器地址</span>
+                            <input type="text" id="server-addr-input" placeholder="留空=本机 (例: 192.168.1.5)" maxlength="30">
+                        </div>
+                        <button class="btn" id="btn-lan">刷新列表</button>
+                        <button class="btn" id="btn-create-room">创建房间</button>
+                        <button class="btn" id="btn-join-room-menu">加入房间</button>
+                        <button class="btn btn-small" id="btn-back-main">返回</button>
+                    </div>
+                </div>
+            </div>
+            <div id="peer-menu" class="sub-menu hidden">
+                <div class="setting-row">
+                    <span>玩家名称</span>
+                    <input type="text" id="peer-name-input" placeholder="玩家名称" maxlength="12">
+                </div>
+                <div class="setting-row">
+                    <span>信令服务器</span>
+                    <input type="text" id="peer-server-input" placeholder="留空=PeerJS官方云 (自建例: 192.168.1.5:9000)" maxlength="60">
+                </div>
+                <button class="btn" id="btn-peer-create">创建房间</button>
+                <div class="setting-row">
+                    <input type="text" id="peer-join-input" placeholder="输入房间号" maxlength="10" style="text-transform:uppercase;">
+                </div>
+                <button class="btn" id="btn-peer-join">加入房间</button>
+                <div id="peer-status" style="color:#ff6666; min-height:1.2em; font-size:0.9rem;"></div>
+                <button class="btn btn-small" id="btn-peer-back">返回</button>
+            </div>
+            <div id="create-room-panel" class="sub-menu hidden">
+                <div class="setting-row">
+                    <span>房间名称</span>
+                    <input type="text" id="room-name-input" placeholder="输入房间名" maxlength="20">
+                </div>
+                <div class="setting-row">
+                    <span>公开到联机大厅</span>
+                    <input type="checkbox" id="room-public-check" checked>
+                </div>
+                <button class="btn" id="btn-create-confirm">确认创建</button>
+                <button class="btn btn-small" id="btn-create-back">返回</button>
+            </div>
+            <div id="join-room-panel" class="sub-menu hidden">
+                <input type="text" id="join-room-input" placeholder="输入房间号" maxlength="10">
+                <button class="btn" id="btn-join-confirm">确认加入</button>
+                <button class="btn btn-small" id="btn-join-back">返回</button>
+            </div>
+            <div id="settings-panel" class="hidden">
+                <div class="setting-row">
+                    <span style="color:#bbb;font-weight:bold;">BGM</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="bgm-toggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <span style="color:#bbb;font-weight:bold;">亮度</span>
+                    <input type="range" id="brightness-slider" min="0.15" max="3.5" step="0.05" value="1.0">
+                    <span id="brightness-val">1.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 匹配屏幕 / 联机大厅 -->
+        <div id="matching-screen" class="screen" style="display:none;">
+            <h1 id="match-status">正在接入局域网点对点链路...</h1>
+            <div id="room-id-display" style="display:none;"></div>
+            <div id="lobby-list" style="display:none;"></div>
+            <div id="lobby-players" style="display:none;"></div>
+            <button class="btn" id="btn-game-rules" style="display:none;">游戏规则</button>
+            <div id="game-rules-panel" style="display:none;">
+                <h3>对局设置</h3>
+                <div><span>实弹最少:</span><input type="range" id="set-live-min" min="1" max="8" value="1"><span id="live-min-val">1</span></div>
+                <div><span>实弹最多:</span><input type="range" id="set-live-max" min="1" max="8" value="4"><span id="live-max-val">4</span></div>
+                <div><span>空包最少:</span><input type="range" id="set-blank-min" min="1" max="8" value="1"><span id="blank-min-val">1</span></div>
+                <div><span>空包最多:</span><input type="range" id="set-blank-max" min="1" max="8" value="4"><span id="blank-max-val">4</span></div>
+                <h3>道具概率</h3>
+                <div><span>检查弹膛:</span><input type="range" id="prob-check" min="0" max="100" value="20"><span id="prob-check-val">20%</span></div>
+                <div><span>啤酒:</span><input type="range" id="prob-beer" min="0" max="100" value="20"><span id="prob-beer-val">20%</span></div>
+                <div><span>香烟:</span><input type="range" id="prob-cig" min="0" max="100" value="15"><span id="prob-cig-val">15%</span></div>
+                <div><span>手铐:</span><input type="range" id="prob-cuffs" min="0" max="100" value="15"><span id="prob-cuffs-val">15%</span></div>
+                <div><span>手锯:</span><input type="range" id="prob-saw" min="0" max="100" value="10"><span id="prob-saw-val">10%</span></div>
+                <div><span>麻药:</span><input type="range" id="prob-morph" min="0" max="100" value="20"><span id="prob-morph-val">20%</span></div>
+                <button id="btn-save-settings" class="btn btn-small">保存设置</button>
+            </div>
+            <button class="btn" id="btn-ready" style="display:none;">准备</button>
+            <button class="btn" id="btn-cancel-match" style="font-size:1rem;padding:10px; margin-top:20px;">中断传输</button>
+        </div>
+
+        <!-- 结束屏幕 -->
+        <div id="end-screen" class="screen" style="display:none;background:rgba(5,5,5,0.95);">
+            <h1 id="end-title">终局</h1>
+            <div id="score-final" style="color:#aaa; font-size:1.2rem; margin-bottom:20px;"></div>
+            <button class="btn" id="btn-restart">再来一局</button>
+            <button class="btn" id="btn-desktop">回到桌面</button>
+        </div>
+
+        <!-- 偷窃 UI -->
+        <div id="steal-ui">
+            <h2 style="color:#fff; margin-top:0; font-size:1.4rem; text-shadow:0 0 8px var(--blood-red);">窃取目标选定</h2>
+            <div id="steal-items" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:15px;"></div>
+            <button class="btn btn-small" id="btn-cancel-steal">放弃使用</button>
+        </div>
+
+        <!-- 恶魔谈话 UI -->
+        <div id="demon-speak-ui" style="display:none; position:absolute; bottom:80px; left:50%; transform:translateX(-50%); width:90%; max-width:600px; text-align:center; z-index:100; pointer-events:auto;">
+            <div id="demon-text" style="color:#fff; font-size:1.2rem; text-shadow:0 0 8px #000; background:rgba(0,0,0,0.7); padding:20px; border-radius:8px; border:1px solid var(--blood-red);"></div>
+            <button id="btn-agree" class="btn" style="margin-top:15px; display:none;">同意</button>
+        </div>
+
+        <!-- 游戏 HUD -->
+        <div id="hud">
+            <div class="stats-bar">
+                <div class="health">对家 <span id="opponent-name-display" style="color:#ff6666;">恶魔</span>: <span id="enemy-hp">4</span></div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span id="score-display" style="color:#ff6666; font-size:0.9rem; background:rgba(0,0,0,0.5); padding:2px 10px; border-radius:3px;">你 0 - 0 恶魔</span>
+                    <span id="turn-indicator"></span>
+                    <div id="timer-box">15</div>
+                </div>
+                <div class="health">你: <span id="player-hp">4</span></div>
+            </div>
+            <div id="chat-container">
+                <div id="chat-log"></div>
+                <input type="text" id="chat-input" placeholder="输入消息...">
+            </div>
+            <div id="item-toast-container"></div>
+            <div id="bullet-counter"></div>
+            <div id="enemy-bubble" class="bubble-container"></div>
+            <div id="player-bubble" class="bubble-container"></div>
+            <div id="msg-center">等待洗牌分发筹码...</div>
+            <div class="bottom-panel">
+                <div class="action-row" id="gun-actions">
+                    <button class="action-btn" id="btn-shoot-enemy">射击对家</button>
+                    <button class="action-btn" id="btn-shoot-self">射击自己</button>
+                </div>
+                <div id="item-tooltip">&nbsp;</div>
+                <button id="btn-quick-toggle">快捷消息</button>
+                <div id="quick-msg-menu">
+                    <button class="taunt-btn" data-id="q1">哎呀，你看起来要输了</button>
+                    <button class="taunt-btn" data-id="q2">傻子</button>
+                    <button class="taunt-btn" data-id="q3">别浪费我时间了</button>
+                    <button class="taunt-btn" data-id="q4">运气实在太不好了</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="src/js/BattleSystem.js"></script>
+<script src="src/js/uiManager.js"></script>
+<script src="src/js/itemManager.js"></script>
+<script src="src/js/networkManager.js"></script>
+<script src="src/js/peerManager.js"></script>
+<script src="src/js/game.js"></script>
+<script src="src/js/opening.js"></script>
+<script>window.__errs=[];window.addEventListener('error',function(e){window.__errs.push(String(e.message)+'@'+e.lineno);});function show(txt,color){var o=document.createElement('pre');o.style.cssText='position:fixed;left:0;top:0;right:0;z-index:99999;background:rgba(0,0,0,0.75);color:'+color+';font-size:14px;padding:8px;white-space:pre-wrap;max-height:40%;overflow:hidden';o.textContent=txt;document.body.appendChild(o);}window.addEventListener('load',function(){setTimeout(function(){var m=document.getElementById('menu-screen'); if(m) m.style.display='none';var hud=document.getElementById('hud'); if(hud) hud.style.display='none';var parts=location.hash.replace('#','').split(':'); var which=parts[0]; var steps=parseInt(parts[1]||'0',10);var fake=performance.now(); performance.now=function(){return fake;};try{ var S=window._sceneManager; var log=[]; var cl=function(){log.push('climax');}; var dn=function(){log.push('done');};if(which==='gun'||which==='gunsawn'){ if(which==='gunsawn') S.sawOffGun(); S.camera.position.set(1.3,1.5,3.2); S.camera.lookAt(0,0.8,0.2); S.camera.fov=50; S.camera.updateProjectionMatrix(); }if(which==='gunfront'){ S.camera.position.set(-1.2,1.3,-0.5); S.camera.lookAt(0,0.8,-2.2); S.camera.fov=50; S.camera.updateProjectionMatrix(); }if(which==='self') S.playShootSequence({shooterIsMe:true,selfShot:true,live:true,damage:1},cl,dn);if(which==='selfblank') S.playShootSequence({shooterIsMe:true,selfShot:true,live:false,damage:0},cl,dn);if(which==='atdemon') S.playShootSequence({shooterIsMe:true,selfShot:false,live:true,damage:1},function(){cl();S.demonReact('hit',{damage:1,side:0.12});},dn);if(which==='bydemon') S.playShootSequence({shooterIsMe:false,selfShot:false,live:true,damage:1},cl,dn);if(which==='demonself') S.playShootSequence({shooterIsMe:false,selfShot:true,live:true,damage:1},function(){cl();S.demonReact('hit',{damage:1,side:0.12});},dn);if(which==='react') S.demonReact('hit',{damage:2,side:0.12});var realRender=S.renderer.render.bind(S.renderer); S.renderer.render=function(){};for(var i=0;i<steps-1;i++){ fake+=50; S._renderWithShake(); S._demonFxStep(); }S.renderer.render=realRender; fake+=50; S._renderWithShake(); S._demonFxStep();show(which+' step='+steps+' t='+(steps*0.05).toFixed(2)+'s '+log.join(',')+' ERRS='+JSON.stringify(window.__errs),'#0f0');}catch(e){ show('THROW '+which+' '+e.message+' '+(e.stack||'').slice(0,300),'#f55'); }},1000);});</script></body>
+</html>

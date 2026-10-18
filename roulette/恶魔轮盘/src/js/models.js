@@ -384,7 +384,12 @@ function M_createItemModelById(id) {
             model = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1),
                 new THREE.MeshBasicMaterial({ color: 0xffffff }));
     }
-    if (model) model.scale.set(1.35, 1.35, 1.35);
+    if (model) {
+        model.scale.set(1.35, 1.35, 1.35);
+        model.updateMatrixWorld(true);
+        const _bb = new THREE.Box3().setFromObject(model);
+        model.userData.restOffset = isFinite(_bb.min.y) ? -_bb.min.y : 0;
+    }
     return model;
 }
 
@@ -732,96 +737,139 @@ function M_buildTableTextured(scene) {
 // ─────────────────────────────────────────────
 // 双管猎枪
 // ─────────────────────────────────────────────
-function M_buildShotgunDouble(scene) {
+function M_walnutTexture() {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#4a2a14'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 90; i++) {
+        const y = Math.random() * 256, a = 0.08 + Math.random() * 0.2;
+        g.strokeStyle = (Math.random() < 0.6 ? 'rgba(20,8,2,' : 'rgba(140,90,50,') + a + ')';
+        g.lineWidth = 0.6 + Math.random() * 2.2;
+        g.beginPath(); g.moveTo(0, y);
+        for (let x = 0; x <= 256; x += 32) g.lineTo(x, y + Math.sin(x * 0.03 + i) * 4 + (Math.random() - 0.5) * 2);
+        g.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    return t;
+}
+
+// box that tapers along z (w0,h0 at -z end -> w1,h1 at +z end) with an optional downward curve (comb drop)
+function M_taperBox(w0, h0, w1, h1, len, drop, mat) {
+    const geo = new THREE.BoxGeometry(1, 1, len, 1, 1, 10);
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+        const t = (p.getZ(i) + len / 2) / len;
+        p.setX(i, p.getX(i) * (w0 + (w1 - w0) * t));
+        p.setY(i, p.getY(i) * (h0 + (h1 - h0) * t) - drop * t * t);
+    }
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, mat);
+}
+
+// Side-by-side double-barrel shotgun with exposed hammers. Muzzle points to -z, butt to +z.
+// Groups 'barrelsLong' / 'barrelsShort' (sawn-off, hidden by default) are swapped by the saw item.
+function M_createShotgunModel() {
     const g = new THREE.Group();
+    const blued = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: 0.95, roughness: 0.26 });
+    const darkSteel = new THREE.MeshStandardMaterial({ color: 0x0c0d0e, metalness: 0.9, roughness: 0.4 });
+    const caseHard = new THREE.MeshStandardMaterial({ color: 0x4a4334, metalness: 0.85, roughness: 0.42 });
+    const brass = new THREE.MeshStandardMaterial({ color: 0xb08a3a, metalness: 0.9, roughness: 0.3 });
+    const cutMetal = new THREE.MeshStandardMaterial({ color: 0x8a8a86, metalness: 0.9, roughness: 0.5 });
+    const wood = new THREE.MeshStandardMaterial({ map: M_walnutTexture(), roughness: 0.55, metalness: 0.0 });
+    const rubber = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.96 });
+    const boreMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+    const makeBarrels = (zBreech, zMuzzle, sawn) => {
+        const grp = new THREE.Group();
+        const L = zBreech - zMuzzle, cz = (zBreech + zMuzzle) / 2;
+        for (const side of [-1, 1]) {
+            const ox = side * 0.052;
+            const b = new THREE.Mesh(new THREE.CylinderGeometry(0.054, 0.046, L, 20), blued);
+            b.rotation.x = Math.PI / 2; b.position.set(ox, 0.40, cz); grp.add(b);
+            const bore = new THREE.Mesh(new THREE.CircleGeometry(0.035, 16), boreMat);
+            bore.rotation.y = Math.PI; bore.position.set(ox, 0.40, zMuzzle - 0.002); grp.add(bore);
+            const ring = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.048, 18), sawn ? cutMetal : blued);
+            ring.rotation.y = Math.PI; ring.position.set(ox, 0.40, zMuzzle - 0.001); grp.add(ring);
+        }
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.016, L), darkSteel);
+        rib.position.set(0, 0.446, cz); grp.add(rib);
+        const bandZ = sawn ? [-0.75] : [-0.9, -2.6];
+        for (const bz of bandZ) {
+            const band = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.05, 0.07), darkSteel);
+            band.position.set(0, 0.40, bz); grp.add(band);
+        }
+        if (!sawn) {
+            const bead = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 8), brass);
+            bead.position.set(0, 0.462, zMuzzle + 0.07); grp.add(bead);
+            const mid = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 6), new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.6, roughness: 0.3 }));
+            mid.position.set(0, 0.458, zMuzzle + 1.9); grp.add(mid);
+        }
+        return grp;
+    };
+    const longG = makeBarrels(0.45, -3.95, false); longG.name = 'barrelsLong'; g.add(longG);
+    const shortG = makeBarrels(0.45, -2.10, true); shortG.name = 'barrelsShort'; shortG.visible = false; g.add(shortG);
+
+    // action body, top strap, side plates, hinge pin, top lever
+    const action = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.27, 1.0), caseHard); action.position.set(0, 0.33, 0.95); g.add(action);
+    const strap = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.014, 0.95), darkSteel); strap.position.set(0, 0.472, 1.1); g.add(strap);
+    for (const side of [-1, 1]) {
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.15, 0.55), caseHard); plate.position.set(side * 0.174, 0.34, 1.05); g.add(plate);
+        for (let i = 0; i < 3; i++) {
+            const line = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.006, 0.40 - i * 0.08), darkSteel);
+            line.position.set(side * 0.176, 0.30 + i * 0.04, 1.05); g.add(line);
+        }
+        const hammer = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.12, 0.05), darkSteel);
+        hammer.position.set(side * 0.072, 0.53, 1.30); hammer.rotation.x = -0.5; g.add(hammer);
+        const spur = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.055, 8), blued);
+        spur.rotation.z = Math.PI / 2; spur.position.set(side * 0.072, 0.585, 1.35); g.add(spur);
+    }
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.36, 10), brass);
+    pin.rotation.z = Math.PI / 2; pin.position.set(0, 0.30, 0.50); g.add(pin);
+    const lever = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.22), blued); lever.position.set(0, 0.486, 1.30); lever.rotation.y = 0.35; g.add(lever);
+
+    // forend with latch and tip cap
+    const forend = M_taperBox(0.26, 0.17, 0.22, 0.12, 1.35, 0.0, wood); forend.position.set(0, 0.235, -0.28); g.add(forend);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.215, 0.10, 0.04), darkSteel); tip.position.set(0, 0.24, -0.97); g.add(tip);
+    const latch = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.12), brass); latch.position.set(0, 0.155, 0.22); g.add(latch);
+
+    // trigger guard and double triggers
+    const guard = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.013, 8, 22), blued);
+    guard.rotation.x = Math.PI / 2; guard.scale.set(1.1, 0.55, 1.0); guard.position.set(0, 0.17, 1.55); g.add(guard);
+    for (const tz of [1.46, 1.60]) {
+        const trig = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.07, 0.020), blued);
+        trig.position.set(0, 0.21, tz); trig.rotation.x = 0.3; g.add(trig);
+    }
+
+    // tapered stock with comb drop, buttplate, sling swivel
+    const stock = M_taperBox(0.17, 0.22, 0.25, 0.40, 2.2, 0.14, wood); stock.position.set(0, 0.30, 2.62); g.add(stock);
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(0.255, 0.43, 0.05), rubber); pad.position.set(0, 0.16, 3.74); g.add(pad);
+    const swivel = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.006, 6, 12), brass); swivel.position.set(0, 0.05, 3.35); g.add(swivel);
+    return g;
+}
+
+// the cut-off barrel stub (two tubes), origin at its centre, muzzle toward -z
+function M_createBarrelPiece() {
+    const g = new THREE.Group();
+    const blued = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: 0.95, roughness: 0.26 });
+    const cutMetal = new THREE.MeshStandardMaterial({ color: 0x8a8a86, metalness: 0.9, roughness: 0.5 });
+    const L = 1.85;
+    for (const side of [-1, 1]) {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.050, 0.046, L, 16), blued);
+        b.rotation.x = Math.PI / 2; b.position.set(side * 0.052, 0, 0); g.add(b);
+        const cut = new THREE.Mesh(new THREE.RingGeometry(0.0, 0.050, 16), cutMetal);
+        cut.position.set(side * 0.052, 0, L / 2 + 0.001); g.add(cut);
+    }
+    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.016, L), blued); rib.position.set(0, 0.046, 0); g.add(rib);
+    return g;
+}
+
+function M_buildShotgunDouble(scene) {
+    const g = M_createShotgunModel();
     g.name = 'gunGroup';
-
-    const steelMat  = new THREE.MeshStandardMaterial({ color: 0x141414, metalness: 0.92, roughness: 0.28 });
-    const darkSteel = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, metalness: 0.88, roughness: 0.38 });
-    const stockMat  = new THREE.MeshStandardMaterial({ color: 0x3b1e0a, roughness: 0.84, metalness: 0.0 });
-    const stockDark = new THREE.MeshStandardMaterial({ color: 0x2a1206, roughness: 0.88, metalness: 0.0 });
-    const rubberMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.96 });
-    const ironMat   = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.85, roughness: 0.35 });
-
-    for (const side of [-1, 1]) {
-        const ox = side * 0.085;
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.050, 4.4, 18), steelMat);
-        barrel.rotation.x = Math.PI / 2; barrel.position.set(ox, 0.40, -1.7);
-        g.add(barrel);
-        const bore = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 4.42, 12),
-            new THREE.MeshStandardMaterial({ color: 0x040404, roughness: 0.6 }));
-        bore.rotation.x = Math.PI / 2; bore.position.set(ox, 0.40, -1.7);
-        g.add(bore);
-        const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.048, 0.10, 16), steelMat);
-        muzzle.rotation.x = Math.PI / 2; muzzle.position.set(ox, 0.40, -3.9);
-        g.add(muzzle);
-    }
-
-    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.065, 4.3), darkSteel);
-    rib.position.set(0, 0.40, -1.65); g.add(rib);
-
-    for (let i = 0; i < 3; i++) {
-        const band = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.055, 0.055), steelMat);
-        band.position.set(0, 0.40, -0.7 - i * 1.1); g.add(band);
-    }
-
-    const sight = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6),
-        new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.7, roughness: 0.2 }));
-    sight.position.set(0, 0.462, -3.82); g.add(sight);
-    const rearBase = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.024, 0.022), steelMat);
-    rearBase.position.set(0, 0.462, -0.55); g.add(rearBase);
-
-    const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 1.6), darkSteel);
-    receiver.position.set(0, 0.34, 0.85); g.add(receiver);
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.018, 1.4), ironMat);
-    rail.position.set(0, 0.55, 0.85); g.add(rail);
-
-    for (const side of [-1, 1]) {
-        const ep = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.10, 0.22),
-            new THREE.MeshStandardMaterial({ color: 0x050505 }));
-        ep.position.set(side * 0.161, 0.35, 0.8); g.add(ep);
-        const hammer = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.11, 0.055), darkSteel);
-        hammer.position.set(side * 0.075, 0.50, 1.55);
-        hammer.rotation.x = -0.35; g.add(hammer);
-        const hammerSpur = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.06, 8), steelMat);
-        hammerSpur.position.set(side * 0.075, 0.56, 1.62); g.add(hammerSpur);
-    }
-
-    const forestock = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 1.2), stockMat);
-    forestock.position.set(0, 0.22, -0.28); g.add(forestock);
-    for (let i = 0; i < 10; i++) {
-        const groove = new THREE.Mesh(new THREE.BoxGeometry(0.285, 0.005, 0.022),
-            new THREE.MeshStandardMaterial({ color: 0x220d03, roughness: 0.97 }));
-        groove.position.set(0, 0.22, -0.78 + i * 0.11); g.add(groove);
-    }
-
-    const guardRing = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.013, 8, 22), ironMat);
-    guardRing.rotation.x = Math.PI / 2; guardRing.scale.set(1.1, 0.55, 1.0);
-    guardRing.position.set(0, 0.17, 1.52); g.add(guardRing);
-    for (const side of [-1, 1]) {
-        const trig = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.072, 0.020), ironMat);
-        trig.position.set(side * 0.032, 0.21, 1.50); trig.rotation.x = 0.3; g.add(trig);
-    }
-
-    const stockMain = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.32, 1.85), stockMat);
-    stockMain.position.set(0, 0.25, 2.78); g.add(stockMain);
-    const stockTop = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.12, 1.65), stockDark);
-    stockTop.position.set(0, 0.44, 2.78); g.add(stockTop);
-    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.50), stockDark);
-    grip.position.set(0, 0.12, 1.84); g.add(grip);
-    const buttpad = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.34, 0.055), rubberMat);
-    buttpad.position.set(0, 0.25, 3.70); g.add(buttpad);
-    const stockPlate = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.32, 0.008), steelMat);
-    stockPlate.position.set(0, 0.25, 3.66); g.add(stockPlate);
-    for (const [sx, sy] of [[-0.07, 0.34],[0.07, 0.34],[-0.07, 0.16],[0.07, 0.16]]) {
-        const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.012, 8),
-            new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.6 }));
-        screw.rotation.z = Math.PI / 2; screw.position.set(sx, sy, 3.668); g.add(screw);
-    }
-
     g.position.set(0, 0.46, 0);
     scene.add(g);
 }
+
 
 // ─────────────────────────────────────────────
 // 恶魔

@@ -4,7 +4,8 @@
     "strategy": "策略对抗",
     "story": "叙事沙盒",
     "sandbox": "方块沙盒",
-    "ar": "增强现实"
+    "ar": "增强现实",
+    "build": "建筑漫游"
   },
   "games": [
     "games/abandoned-park",
@@ -12,6 +13,7 @@
     "games/捉鬼",
     "games/blockstory",
     "games/sneaky-lunch",
-    "games/ar-blockworld"
+    "games/ar-blockworld",
+    "games/mc-villa"
   ]
 }

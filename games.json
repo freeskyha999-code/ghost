@@ -5,6 +5,7 @@
     "story": "叙事沙盒"
   },
   "games": [
+    "games/abandoned-park",
     "roulette/恶魔轮盘",
     "games/捉鬼",
     "games/blockstory",

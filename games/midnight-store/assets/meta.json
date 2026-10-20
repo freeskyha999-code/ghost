@@ -1,0 +1,33 @@
+{
+ "imgs": {
+  "girl_f": "assets/img/girl_f.jpg",
+  "girl_b": "assets/img/girl_b.jpg",
+  "girl_s": "assets/img/girl_s.jpg",
+  "clerk_f": "assets/img/clerk_f.jpg",
+  "clerk_b": "assets/img/clerk_b.jpg",
+  "clerk_s": "assets/img/clerk_s.jpg",
+  "e_conc": "assets/img/e_conc.jpg",
+  "e_asphalt": "assets/img/e_asphalt.jpg",
+  "e_sidewalk": "assets/img/e_sidewalk.jpg",
+  "e_shopfloor": "assets/img/e_shopfloor.jpg",
+  "e_grass": "assets/img/e_grass.jpg",
+  "e_sky": "assets/img/e_sky.jpg",
+  "e_brick": "assets/img/e_brick.jpg",
+  "e_stile": "assets/img/e_stile.jpg",
+  "e_wood": "assets/img/e_wood.jpg",
+  "e_tile": "assets/img/e_tile.jpg",
+  "e_metal": "assets/img/e_metal.jpg",
+  "e_paint": "assets/img/e_paint.jpg",
+  "e_card": "assets/img/e_card.jpg",
+  "e_bag": "assets/img/e_bag.jpg",
+  "e_fence": "assets/img/e_fence.png"
+ },
+ "tmir": [
+  "brick",
+  "fence"
+ ],
+ "meshes": [
+  "girl",
+  "clerk"
+ ]
+}

@@ -14,6 +14,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;touch-action:none
 #ld{margin-top:14px;color:#a2c97a;font-size:14px}
 .b{position:fixed;width:62px;height:62px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(0,0,0,.32);color:#fff;font-size:15px;z-index:3;padding:0;-webkit-tap-highlight-color:transparent}
 #bj{right:calc(26px + env(safe-area-inset-right));bottom:30px}#bu{right:calc(104px + env(safe-area-inset-right));bottom:62px}#bs{right:calc(26px + env(safe-area-inset-right));top:18px;width:46px;height:46px;font-size:20px}
+#bf{display:none;right:calc(26px + env(safe-area-inset-right));bottom:106px;font-size:24px}
+#tt{position:fixed;left:50%;top:14%;transform:translateX(-50%);max-width:70%;padding:8px 16px;border-radius:10px;background:rgba(0,0,0,.6);color:#fff;font-size:14px;text-align:center;opacity:0;transition:opacity .4s;pointer-events:none;z-index:4}
 #back{position:fixed;left:calc(14px + env(safe-area-inset-left));top:14px;z-index:3;color:#fff;font-size:13px;text-decoration:none;background:rgba(0,0,0,.35);padding:6px 10px;border-radius:14px}
 #jr{display:none;position:fixed;width:100px;height:100px;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);z-index:2;pointer-events:none}
 #jk{position:absolute;left:30px;top:30px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.5)}
@@ -29,6 +31,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;touch-action:none
 <button class="b" id="bj">跳</button>
 <button class="b" id="bu">开关</button>
 <button class="b" id="bs">☀</button>
+<button class="b" id="bf">🔦</button>
+<div id="tt"></div>
 <div class="ov" id="st">
   <h1>两层别墅</h1>
   <p>原版方块搭建的两层小别墅，院子里有小路、花草和树。</p>
@@ -38,6 +42,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;touch-action:none
 </div>
 <div class="ov" id="rot"><h1>请横屏使用</h1><p>把手机转成横向，画面会自动适配。</p></div>
 <script src="engine.js"></script>
+<script src="mine.js"></script>
 <script src="villa.js"></script>
 <script>boot();</script>
 </body>

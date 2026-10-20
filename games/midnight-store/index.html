@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><title>深夜便利店</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0a0f18;--fg:#f0f0f0;--pn:rgba(8,10,14,.72);--ac:#ffd23f;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0f18}}
+:root[data-theme="dark"]{--bg:#0a0f18}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;color:var(--fg);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;user-select:none;-webkit-user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.l{position:fixed;pointer-events:none}
+#bt,#bb{left:0;right:0;height:0;background:#000;transition:height .6s;z-index:5}#bt{top:0}#bb{bottom:0}
+.cine #bt,.cine #bb{height:11vh}
+#hud{opacity:1;transition:opacity .4s}.cine #hud{opacity:0}
+#tk{top:calc(10px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));background:var(--pn);padding:6px 12px;border-radius:8px;font-size:13px;line-height:1.7}
+#obj{top:calc(10px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font-size:15px;color:var(--ac);text-shadow:0 1px 4px #000}
+#hint{left:0;right:0;top:58%;text-align:center;font-size:15px;color:var(--ac);text-shadow:0 1px 4px #000}
+#xh{left:50%;top:50%;width:5px;height:5px;margin:-2px;background:#fff;opacity:.55;border-radius:3px}
+#sub{left:8%;right:8%;bottom:calc(2.2vh);text-align:center;font-size:19px;line-height:1.5;text-shadow:0 1px 5px #000,0 0 3px #000;opacity:0;transition:opacity .25s;z-index:6}
+#sub b{color:var(--ac);margin-right:10px}
+#cap{left:0;right:0;top:40%;text-align:center;font-size:30px;letter-spacing:6px;opacity:0;transition:opacity 1s;z-index:6;text-shadow:0 0 8px #000}
+#vg{inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%);z-index:3}
+#clk{top:calc(10px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));font:600 15px ui-monospace,Menlo,monospace;letter-spacing:2px;color:#ff5a4f;text-shadow:0 0 8px rgba(255,60,50,.6);background:var(--pn);padding:5px 10px;border-radius:6px}
+#hold{left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--pn);padding:6px 12px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .3s}
+#gr{inset:-60%;width:220%;height:220%;background-size:256px 256px;opacity:.07;mix-blend-mode:overlay;animation:gr .45s steps(1) infinite;z-index:4}
+@keyframes gr{0%{transform:translate(0,0)}20%{transform:translate(-7%,5%)}40%{transform:translate(5%,-9%)}60%{transform:translate(-10%,-4%)}80%{transform:translate(8%,8%)}}
+#gear{position:fixed;top:calc(52px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));width:38px;height:38px;border-radius:50%;background:var(--pn);border:1px solid #666;color:#ddd;font-size:19px;z-index:9;padding:0}.cine #gear{opacity:0;pointer-events:none}
+#set{position:fixed;top:calc(98px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));width:230px;background:rgba(10,12,14,.92);border:1px solid #555;border-radius:10px;padding:8px 12px;z-index:9;display:none;font-size:14px}
+#set .r{display:flex;justify-content:space-between;align-items:center;padding:5px 0}#set button{min-width:62px;padding:5px 10px;font-size:13px;border-radius:14px}
+#tk{backdrop-filter:blur(6px)}#ov h1{letter-spacing:8px;font-weight:300}
+#toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--pn);padding:8px 16px;border-radius:8px;font-size:15px;opacity:0;transition:opacity .4s;z-index:12;pointer-events:none;max-width:70vw;text-align:center}
+#note{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,80vw);background:#efe6c8;color:#2a2418;padding:18px 22px;border-radius:6px;box-shadow:0 8px 40px #000;z-index:14;display:none;font-size:16px;line-height:1.7}#note b{font-size:18px;color:#8a2a1a}#note p{margin:10px 0}#note i{font-size:12px;color:#8a7a5a;font-style:normal}
+#fd{inset:0;background:#000;opacity:1;z-index:7}
+#E{position:fixed;right:calc(40px + env(safe-area-inset-right,0px));bottom:calc(36px + env(safe-area-inset-bottom,0px));width:88px;height:88px;border-radius:50%;background:var(--pn);border:2px solid var(--ac);color:var(--ac);font-size:19px;display:none;z-index:4}
+#st{width:96px;height:96px;margin:-48px;border:2px solid rgba(255,255,255,.35);border-radius:50%;display:none}#kn{width:40px;height:40px;margin:-20px;border-radius:50%;background:rgba(255,255,255,.45);display:none}
+#ov{position:fixed;inset:0;background:rgba(5,7,10,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:12px;z-index:20}
+#ov h1{margin:0;font-size:30px}#ov p{margin:0;color:#aaa;font-size:14px;line-height:1.8;max-width:520px}
+#ov button{background:var(--ac);color:#111;border:0;border-radius:24px;padding:11px 36px;font-size:18px}
+#pt{position:fixed;inset:0;background:#05070a;z-index:30;display:none;align-items:center;justify-content:center;font-size:20px}
+@media (orientation:portrait){#pt{display:flex}}
+</style></head><body>
+<div id="toast"></div><div id="note"></div><div id="hud"><button id="gear">⚙</button><div id="set"></div><div id="tk" class="l"></div><div id="clk" class="l"></div><div id="hold" class="l"></div><div id="obj" class="l"></div><div id="xh" class="l"></div><div id="hint" class="l"></div></div>
+<div id="bt" class="l"></div><div id="bb" class="l"></div><div id="sub" class="l"></div><div id="cap" class="l"></div><div id="vg" class="l"></div><div id="gr" class="l"></div><div id="fd" class="l"></div>
+<div id="st" class="l"></div><div id="kn" class="l"></div><button id="E">互动</button>
+<div id="ov"><h1>深夜便利店</h1><p>请横屏游玩。左半屏拖动移动，右半屏拖动转头，<br>对准发光物品点右下「互动」。过场字幕会自动播放，点屏幕可跳到下一句。</p><button id="go" disabled>加载中…</button></div>
+<div id="pt">请把手机横过来 ↻</div>
+<script src="lib/three.min.js"></script>
+<script src="js/loader.js"></script></body></html>

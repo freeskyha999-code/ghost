@@ -5,7 +5,8 @@
     "story": "叙事沙盒",
     "sandbox": "方块沙盒",
     "ar": "增强现实",
-    "build": "建筑漫游"
+    "build": "建筑漫游",
+    "simulation": "模拟经营"
   },
   "games": [
     "games/abandoned-park",
@@ -14,6 +15,7 @@
     "games/blockstory",
     "games/sneaky-lunch",
     "games/ar-blockworld",
-    "games/mc-villa"
+    "games/mc-villa",
+    "games/midnight-store"
   ]
 }

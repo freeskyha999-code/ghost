@@ -1,0 +1,35 @@
+{
+  "name": "深夜便利店",
+  "en": "MIDNIGHT CONVENIENCE STORE",
+  "desc": "在深夜的便利店里值一个班，接待形形色色的客人，听完他们没说出口的话。",
+  "tags": ["simulation", "story"],
+  "status": "可玩",
+  "platform": ["电脑", "手机"],
+  "cover": "games/midnight-store/assets/cover.webp",
+  "added": "2026-10-20",
+  "featured": false,
+  "launch": {
+    "icon": "games/midnight-store/assets/icon.webp",
+    "tagline": "凌晨三点，灯还亮着。",
+    "description": "你在一家深夜便利店值夜班。补货、收银、应对各种客人，也在一次次对话里慢慢拼出这条街和这些人背后的故事。节奏舒缓，适合一个人安静地玩。",
+    "features": [
+      "夜班经营：补货、收银、整理货架",
+      "客人叙事：每位客人都有自己的故事线",
+      "多结局：你的选择会影响故事的走向"
+    ],
+    "controls": [
+      "鼠标 / 触摸点击进行交互",
+      "键盘方向键或 WASD 移动（如游戏内支持）"
+    ],
+    "requirements": [
+      "建议使用较新版本的 Chrome、Edge 或 Safari",
+      "手机端建议横屏游玩"
+    ],
+    "tips": [
+      "第一次进入建议先看看游戏内的操作说明",
+      "进度保存在浏览器本地，换设备不会同步"
+    ],
+    "orientation": "landscape",
+    "accent": "#f2c46b"
+  }
+}

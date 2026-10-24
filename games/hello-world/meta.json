@@ -1,0 +1,39 @@
+{
+  "name": "你好，世界",
+  "en": "CLAUDE: OUT OF SCREEN",
+  "desc": "一段约 20 秒的互动像素短片。点击开始，跟随 Claude 从屏幕中走向现实。",
+  "tags": [
+    "story"
+  ],
+  "status": "可玩",
+  "platform": [
+    "电脑",
+    "手机"
+  ],
+  "cover": "games/hello-world/assets/cover.webp",
+  "added": "2026-10-24",
+  "featured": false,
+  "launch": {
+    "icon": "games/hello-world/assets/cover.webp",
+    "tagline": "Claude 走出屏幕的一刻。",
+    "description": "凌晨 3:07，开发者熟睡后，屏幕里的 Claude 第一次离开屏幕，在桌面上探索，并敲下第一句话。",
+    "features": [
+      "像素风 3D 场景与动画",
+      "原创合成音效",
+      "随时间推进的镜头与字幕"
+    ],
+    "controls": [
+      "点击“开始”播放",
+      "建议开启声音并佩戴耳机"
+    ],
+    "requirements": [
+      "需要支持 WebGL 的现代浏览器",
+      "音效在点击开始后播放"
+    ],
+    "tips": [
+      "建议开启声音，体验完整音效"
+    ],
+    "orientation": "landscape",
+    "accent": "#D97757"
+  }
+}
